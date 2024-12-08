@@ -1,0 +1,30 @@
+{
+  "mode": "debug",
+  "snowflake": {
+    "account": "",
+    "user": "",
+    "password": "",
+    "role": "",
+    "warehouse": "COMPUTE_WH",
+    "database": "SNOWFLAKE_AI_TOOLKIT",
+    "schema": "PUBLIC",
+    "stage": "SF_AI_STAGE"
+  },
+  "default_settings": {
+    "model": ["snowflake-arctic", "mistral-large", "reka-flash", "llama2-70b-chat", "gemma-7b", "mixtral-8x7b", "mistral-7b"],
+    "fine_tune_models" : ["llama3-8b","llama3-70b","llama3.1-8b","llama3.1-70b","mistral-7b","mixtral-8x7b"],
+    "temperature_min": 0.0,
+    "temperature_max": 1.0,
+    "temperature": 0.7,                
+    "max_tokens_min": 1,
+    "max_tokens_max": 2000,
+    "max_tokens": 200,               
+    "guardrails": false,
+    "languages": ["en", "es", "fr", "de", "zh"],
+    "logo_path" : "src/logo.webp",
+    "embeddings" :{
+      "EMBED_TEXT_768":["snowflake-arctic-embed-m-v1.5","snowflake-arctic-embed-m","e5-base-v2"],
+      "EMBED_TEXT_1024":["nv-embed-qa-4","multilingual-e5-large","voyage-multilingual-2"]
+  }
+  }
+}

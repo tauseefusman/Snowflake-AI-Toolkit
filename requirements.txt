@@ -1,0 +1,6 @@
+streamlit
+snowflake-snowpark-python
+PyPDF2
+langchain
+pandas
+pyarrow
