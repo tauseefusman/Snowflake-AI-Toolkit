@@ -1,7 +1,7 @@
 import streamlit as st
 
 def display_setup(session):
-    # Apply custom CSS styles for consistency with home.py
+    # Apply custom CSS styles for consistency
     st.markdown("""
         <style>
             .header-section {
@@ -38,28 +38,14 @@ def display_setup(session):
                 line-height: 1.5;
                 color: #333;
             }
-            .get-started-btn {
-                background-color: #56CCF2;
-                color: white;
-                border: none;
-                padding: 15px 30px;
-                font-size: 1.2em;
-                border-radius: 5px;
-                margin-top: 20px;
-                display: inline-block;
-                text-decoration: none;
-            }
-            .get-started-btn:hover {
-                background-color: #2D9CDB;
-            }
         </style>
     """, unsafe_allow_html=True)
 
     # Header Section
     st.markdown("""
         <div class="header-section">
-            <div class="header-title">Setup Guide: Snowflake AI Toolkit</div>
-            <div class="header-subtitle">Snowflake AI Toolkit is an AI Accelerator and Playground for enabling AI in Snowflake.</div>
+            <div class="header-title">Setup Guide: Snowflake Cortex Demo</div>
+            <div class="header-subtitle">Learn how to configure and deploy the application</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -68,68 +54,13 @@ def display_setup(session):
         <div class="section">
             <div class="section-title">1. Prerequisites</div>
             <div class="section-content">
-                Before setting up the app, make sure you have:
+                Ensure you meet the following prerequisites before proceeding:
                 <ul>
-                    <li><strong>Snowflake account</strong> with Cortex functionalities enabled.</li>
-                    <li><strong>ACCOUNTADMIN</strong> or equivalent role for creating stages, databases, and other resources.</li>
-                    <li><strong>Streamlit</strong> installed on your local machine or server.</li>
-                    <li><strong>Python 3.7+</strong> installed.</li>
+                    <li>An active <strong>Snowflake account</strong> with Cortex functionalities enabled.</li>
+                    <li>Account role: <strong>ACCOUNTADMIN</strong> or equivalent with permissions to create stages, databases, and other resources.</li>
+                    <li>Python version <strong>3.7+</strong> installed.</li>
+                    <li><strong>Streamlit</strong> installed for local testing.</li>
                 </ul>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Native Streamlit Emphasis Section
-    st.markdown("""
-        <div class="section">
-            <div class="section-title">2. Native Mode Setup (Recommended)</div>
-            <div class="section-content">
-                The app is designed to be run in <strong>Native Streamlit mode</strong>. This mode ensures that your app runs 
-                within Snowflake’s managed environment, offering better integration and performance.
-                <ul>
-                    <li><strong>Native Streamlit Mode</strong>: The app will use the active Snowflake session, so no local configuration for credentials is required.</li>
-                    <li>Ensure that your Snowflake account supports running Streamlit apps natively.</li>
-                </ul>
-                To run the app in native mode, follow these steps:
-                <ol>
-                    <li>Upload the app to your Snowflake environment.</li>
-                    <li>Set <code>"mode": "native"</code> in the <code>src/settings_config.json</code> configuration file.</li>
-                    <li>Use the following command to launch the app in native mode within Snowflake:</li>
-                </ol>
-                <pre><code>streamlit run streamlit_app.py --run_native</code></pre>
-                When running in native mode, the Snowflake connection is handled automatically.
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Debug Mode Section
-    st.markdown("""
-        <div class="section">
-            <div class="section-title">3. Debug Mode Setup (Optional)</div>
-            <div class="section-content">
-                You can also run the app in <strong>Debug Mode</strong> if you want to test the app locally on your machine. This mode requires you to 
-                configure Snowflake credentials manually.
-                <ol>
-                    <li>Open the <code>src/settings_config.json</code> file and update it with your Snowflake credentials:</li>
-                </ol>
-                <pre><code>
-{
-  "snowflake": {
-    "account": "your-account-url",
-    "user": "your-username",
-    "password": "your-password",
-    "role": "your-role",
-    "warehouse": "your-warehouse",
-    "database": "your-database",
-    "schema": "your-schema"
-  },
-  "mode": "debug"
-}
-                </code></pre>
-                <ol start="2">
-                    <li>After configuring the credentials, run the app in debug mode with:</li>
-                </ol>
-                <pre><code>streamlit run streamlit_app.py --debug</code></pre>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -137,62 +68,91 @@ def display_setup(session):
     # Cloning the Repository Section
     st.markdown("""
         <div class="section">
-            <div class="section-title">4. Clone the Repository</div>
+            <div class="section-title">2. Clone the Repository</div>
             <div class="section-content">
-                Clone the repository that contains the Snowflake Cortex demo app code:
-                <pre><code>git clone https://github.com/sgsshankar/Snowflake-AI-Toolkit.git</code></pre>
-                Then navigate into the cloned directory:
-                <pre><code>cd snowflake-ai-toolkit</code></pre>
+                Clone the application repository and install dependencies:
+                <pre><code>
+git clone https://github.com/sgsshankar/Snowflake-AI-Toolkit.git
+cd snowflake-ai-toolkit
+pip install -r requirements.txt
+                </code></pre>
+                All required dependencies are listed in the <code>requirements.txt</code> file.
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Install Dependencies Section
+    # Configuring Debug Mode Section
     st.markdown("""
         <div class="section">
-            <div class="section-title">5. Install Python Dependencies</div>
+            <div class="section-title">3. Configuring Debug Mode</div>
             <div class="section-content">
-                The app requires several Python libraries, including <strong>snowflake-snowpark-python</strong>, <strong>Streamlit</strong>, and others.
-                <pre><code>pip install -r requirements.txt</code></pre>
-                Ensure <strong>pandas</strong> and <strong>pyarrow</strong> are also installed, as they are needed for various Snowflake operations.
+                Follow these steps to configure the application for Debug Mode:
+                <ol>
+                    <li>Open the <code>src/settings_config.json</code> file in a text editor.</li>
+                    <li>Locate the <code>mode</code> parameter and set its value to <code>"debug"</code>:
+                        <pre><code>
+    {
+        "mode": "debug",
+        "snowflake": {
+        "account": "your-account-url",
+        "user": "your-username",
+        "password": "your-password",
+        "role": "your-role",
+        "warehouse": "your-warehouse",
+        "database": "your-database",
+        "schema": "your-schema"
+        }
+    }
+                        </code></pre>
+                    </li>
+                    <li>Save the file after making changes.</li>
+                </ol>
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Create Database and Stage (Auto-handled) Section
+    # Running the App Locally
     st.markdown("""
         <div class="section">
-            <div class="section-title">6. Create Database and Stage (Auto-handled)</div>
+            <div class="section-title">4. Running the Application Locally</div>
             <div class="section-content">
-                Upon launching the app, it will automatically create the necessary database and stage in your Snowflake account, 
-                provided the user has the required permissions.
-                Ensure that your Snowflake role has privileges to create databases and stages.
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Running the App Section
-    st.markdown("""
-        <div class="section">
-            <div class="section-title">7. Running the App</div>
-            <div class="section-content">
-                Once everything is set up, launch the app using Streamlit:
+                Launch the app in Debug Mode using the following command:
                 <pre><code>streamlit run streamlit_app.py</code></pre>
-                This will start the app in your default browser. Use the sidebar to navigate between various components, including 
-                <strong>Playground</strong>, <strong>Build</strong>, and <strong>Notifications</strong>.
+                After verifying that the app behaves as expected in Debug Mode, you can switch to Native Mode for deployment.
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Troubleshooting and Caveats Section
+    # Switching to Native Mode
     st.markdown("""
         <div class="section">
-            <div class="section-title">8. Troubleshooting & Caveats</div>
+            <div class="section-title">5. Deploying Natively in Snowflake</div>
             <div class="section-content">
+                To deploy the application natively in Snowflake:
+                <ol>
+                    <li>Set the <code>MODE</code> in your <code>settings.json</code> file to <code>native</code>.</li>
+                    <li>Use the following command to deploy:
+                        <pre><code>
+snow streamlit deploy --account "your_account" --user "your_username" --password "your_password" --role "your_role" --warehouse "your_warehouse" --database "your_database" --replace
+                        </code></pre>
+                        Replace placeholders (<code>&lt;your_account&gt;</code>, etc.) with your actual Snowflake account details.
+                    </li>
+                    <li>No additional dependency installation is required for running natively in Snowflake.</li>
+                </ol>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Troubleshooting Section
+    st.markdown("""
+        <div class="section">
+            <div class="section-title">6. Troubleshooting</div>
+            <div class="section-content">
+                Common issues and solutions:
                 <ul>
-                    <li>If you encounter Snowflake permission errors, check your role privileges to ensure you can create databases and stages.</li>
-                    <li>If <strong>pandas</strong> or <strong>pyarrow</strong> dependencies fail, try reinstalling them using <code>pip install pandas pyarrow</code>.</li>
-                    <li>Ensure your Snowflake account supports the necessary Cortex functionalities.</li>
+                    <li><strong>Permission errors:</strong> Ensure your Snowflake role has the necessary privileges.</li>
+                    <li><strong>Dependency issues:</strong> Reinstall dependencies using <code>pip install -r requirements.txt</code>.</li>
+                    <li><strong>Configuration issues:</strong> Verify that the <code>.env</code> file is correctly set up.</li>
                 </ul>
             </div>
         </div>
@@ -201,9 +161,9 @@ def display_setup(session):
     # Support Section
     st.markdown("""
         <div class="section">
-            <div class="section-title">9. Support</div>
+            <div class="section-title">7. Support</div>
             <div class="section-content">
-                For further assistance, please reach out to the project maintainers through GitHub or other communication channels.
+                For further assistance, please reach out to the project maintainers or open an issue on GitHub.
             </div>
         </div>
     """, unsafe_allow_html=True)
