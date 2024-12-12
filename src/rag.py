@@ -35,14 +35,18 @@ def display_rag(session):
             selected_stage = st.selectbox("Select Stage", stages or [])
         with col2:
             if selected_stage:
-                uploaded_file = st.file_uploader("Upload File", type=["pdf", "txt"], help="Upload a PDF or TXT file (Max: 5MB)")
-                if uploaded_file:
-                    try:
-                        upload_file_to_stage(session, selected_db, selected_schema, selected_stage, uploaded_file)
-                        st.success(f"File '{uploaded_file.name}' uploaded successfully.")
-                    except Exception as e:
-                        st.error(f"Failed to upload file: {e}")
-                        add_log_entry(session, "Upload File", str(e))
+                if config["mode"] == "debug":
+                    uploaded_file = st.file_uploader("Upload File", type=["pdf", "txt"], help="Upload a PDF or TXT file (Max: 5MB)")
+                    if uploaded_file:
+                        try:
+                            upload_file_to_stage(session, selected_db, selected_schema, selected_stage, uploaded_file)
+                            st.success(f"File '{uploaded_file.name}' uploaded successfully.")
+                        except Exception as e:
+                            st.error(f"Failed to upload file: {e}")
+                            add_log_entry(session, "Upload File", str(e))
+                else:
+                    st.info("Upload Option Available Only in 'debug' Mode")
+
 
         # List files in the stage
         if selected_stage:
@@ -114,7 +118,7 @@ def display_rag(session):
                 else:
                     selected_column = st.selectbox("Select Column", ["Vector_Embeddings"])
         #st.subheader("Select Model, Embedding Type and Emdedding Model")
-        st.info("For optimal results, use the same embedding type and model consistently when creating embeddings.")
+        st.info("Use the same embedding type and model consistently when creating embeddings.")
         col1,col2,col3 =  st.columns(3)
         with col1:
             selected_model = st.selectbox("Select Model", config["default_settings"]["model"])
@@ -141,7 +145,7 @@ def display_rag(session):
                 except Exception as e:
                     # Log the error and show an error message
                     add_log_entry(session, "Generate RAG Response", str(e))
-                    st.error("An error occurred while generating the response. Please check the logs for details.")
+                    st.error("An error occurred :  Check if same embedding type and model selected. Please check the logs for details.")
             else:
                 st.error("Please enter a question.")
 
