@@ -13,6 +13,21 @@ with open(config_path, "r") as f:
     config = json.load(f)
 
 def display_rag(session):
+    """
+    Displays the Retrieval-Augmented Generation (RAG) interface in Streamlit.
+    
+    This function creates a user interface for either creating a new knowledge source
+    by uploading documents and generating embeddings, or using an existing knowledge
+    source to answer questions. It handles file uploads, embedding generation, and 
+    question answering with RAG.
+
+    Args:
+        session: Snowflake session object for database operations
+
+    The function provides options to:
+    - Create knowledge source: Upload documents, select embedding type/model, create vector embeddings
+    - Use knowledge source: Select existing embeddings table and ask questions using RAG
+    """
     st.title("Retrieval-Augmented Generation (RAG)")
     st.subheader("Use Your Documents As Context To Answer Questions")
 
@@ -145,14 +160,33 @@ def display_rag(session):
                 except Exception as e:
                     # Log the error and show an error message
                     add_log_entry(session, "Generate RAG Response", str(e))
-                    st.error("An error occurred :  Check if same embedding type and model selected. Please check the logs for details.")
+                    st.error("An error occurred :  Check if same embedding type and model are selected. Please check the logs for details.")
             else:
                 st.error("Please enter a question.")
 
 
 
-def trigger_async_rag_process(session, db, schema, stage, embedding_type,embedding_model, output_table, notification_id):
-    """Triggers the async RAG embedding creation process with error handling and logging."""
+def trigger_async_rag_process(session, db, schema, stage, embedding_type, embedding_model, output_table, notification_id):
+    """
+    Triggers an asynchronous process to create vector embeddings from documents in a stage.
+
+    This function initiates an asynchronous process that creates vector embeddings from 
+    documents stored in a Snowflake stage. It handles the process management, error handling,
+    and status notifications.
+
+    Args:
+        session: Snowflake session object
+        db (str): Database name
+        schema (str): Schema name 
+        stage (str): Stage name containing the documents
+        embedding_type (str): Type of embedding to generate
+        embedding_model (str): Model to use for generating embeddings
+        output_table (str): Name of table to store the embeddings
+        notification_id (int): ID of the notification entry to track progress
+
+    The function uses threading and asyncio to handle the asynchronous processing,
+    and updates the notification status on completion or failure.
+    """
     async def async_rag_process():
         try:
             # Simulate asynchronous processing

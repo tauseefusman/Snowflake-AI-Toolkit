@@ -1,6 +1,17 @@
 import streamlit as st
 
 def display_setup(session):
+    """
+    Displays the setup and configuration documentation page in Streamlit.
+    
+    This function renders a styled documentation page that guides users through setting up
+    and configuring the application. It includes sections on prerequisites, repository setup,
+    debug mode configuration, local deployment, native Snowflake deployment, troubleshooting,
+    and support information.
+
+    Args:
+        session: Snowflake session object (unused in this function but kept for consistency)
+    """
     # Apply custom CSS styles for consistency
     st.markdown("""
         <style>
@@ -44,7 +55,7 @@ def display_setup(session):
     # Header Section
     st.markdown("""
         <div class="header-section">
-            <div class="header-title">Setup Guide: Snowflake Cortex Demo</div>
+            <div class="header-title">Local Setup & Configuration</div>
             <div class="header-subtitle">Learn how to configure and deploy the application</div>
         </div>
     """, unsafe_allow_html=True)

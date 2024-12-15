@@ -11,6 +11,24 @@ with open(config_path, "r") as f:
     config = json.load(f)
 
 def display_fine_tune(session):
+    """
+    Display the fine-tuning interface in Streamlit for training and using fine-tuned LLM models.
+    
+    This function creates a Streamlit interface with two main functionalities:
+    1. Fine-tuning a new model using training and validation data from Snowflake tables
+    2. Using an existing fine-tuned model to generate responses
+    
+    Args:
+        session: Snowflake session object used for database operations
+        
+    The function handles:
+    - Database and schema selection
+    - Training and validation table selection
+    - Model selection and naming
+    - Fine-tuning process initiation
+    - Status checking for ongoing fine-tuning jobs
+    - Testing fine-tuned models with custom prompts
+    """
     st.title("Fine-Tune LLM Model")
 
     # Dropdown to select action: Fine-Tune New Model or Use Fine-Tuned Model

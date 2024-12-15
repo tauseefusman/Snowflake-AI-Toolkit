@@ -3,7 +3,15 @@ from snowflake.snowpark import Session
 from datetime import datetime, timedelta
 
 def create_notification_table(session: Session):
-    """Creates a notification table if it doesn't exist."""
+    """
+    Creates a notification table in Snowflake if it doesn't exist.
+    
+    Args:
+        session (Session): Active Snowflake session object
+        
+    Raises:
+        Exception: If table creation fails
+    """
     try:
         session.sql("""
             CREATE TABLE IF NOT EXISTS notification (
@@ -21,7 +29,12 @@ def create_notification_table(session: Session):
         raise Exception(f"Failed to create notification table: {e}")
 
 def create_logs_table(session: Session):
-    """Creates a logs table if it doesn't exist to store error messages."""
+    """
+    Creates a logs table in Snowflake if it doesn't exist.
+    
+    Args:
+        session (Session): Active Snowflake session object
+    """
     session.sql("""
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER IDENTITY PRIMARY KEY,
@@ -32,7 +45,21 @@ def create_logs_table(session: Session):
     """).collect()
 
 def add_notification_entry(session: Session, operation_type: str, status: str, details: str) -> int:
-    """Adds a new entry to the notification table with an In-Progress status and returns the inserted notification ID."""
+    """
+    Adds a new notification entry to the notification table.
+    
+    Args:
+        session (Session): Active Snowflake session object
+        operation_type (str): Type of operation being performed
+        status (str): Current status of the operation
+        details (str): Additional details about the operation
+        
+    Returns:
+        int: ID of the newly created notification entry
+        
+    Raises:
+        Exception: If notification ID retrieval fails
+    """
     if not operation_type:
         operation_type = "Unknown Operation"
     if not status:
@@ -67,8 +94,14 @@ def add_notification_entry(session: Session, operation_type: str, status: str, d
         raise Exception("Failed to retrieve notification ID")
 
 def update_notification_entry(session: Session, notification_id: int, status: str):
-    """Updates the status of a notification entry and commits the change."""
+    """
+    Updates the status and completion time of an existing notification entry.
     
+    Args:
+        session (Session): Active Snowflake session object
+        notification_id (int): ID of the notification to update
+        status (str): New status to set for the notification
+    """
     if not status:
         status = 'Unknown Status'
 
@@ -80,11 +113,26 @@ def update_notification_entry(session: Session, notification_id: int, status: st
     session.sql(query).collect()
 
 def escape_sql_string(value: str) -> str:
-    """Escapes single quotes in SQL strings to avoid SQL injection and syntax errors."""
+    """
+    Escapes single quotes in SQL strings to prevent SQL injection.
+    
+    Args:
+        value (str): String to escape
+        
+    Returns:
+        str: Escaped string with single quotes doubled
+    """
     return value.replace("'", "''") if value else value
 
 def add_log_entry(session: Session, operation_type: str, error_message: str):
-    """Adds a new log entry in case of failure."""
+    """
+    Adds a new error log entry to the logs table.
+    
+    Args:
+        session (Session): Active Snowflake session object
+        operation_type (str): Type of operation that generated the error
+        error_message (str): Description of the error that occurred
+    """
     if not operation_type:
         operation_type = "Unknown Operation"
     if not error_message:
@@ -104,7 +152,17 @@ def add_log_entry(session: Session, operation_type: str, error_message: str):
     session.sql(query).collect()
 
 def fetch_notifications(session: Session, start_date=None, end_date=None):
-    """Fetches the list of notifications, optionally filtered by date."""
+    """
+    Retrieves notification entries filtered by date range.
+    
+    Args:
+        session (Session): Active Snowflake session object
+        start_date (datetime, optional): Start date for filtering notifications
+        end_date (datetime, optional): End date for filtering notifications
+        
+    Returns:
+        pandas.DataFrame: DataFrame containing filtered notification entries
+    """
     create_notification_table(session)
     if start_date and end_date:
         # Format the dates properly for Snowflake SQL
@@ -122,7 +180,17 @@ def fetch_notifications(session: Session, start_date=None, end_date=None):
     return session.sql(query).to_pandas()
 
 def fetch_logs(session: Session, start_date=None, end_date=None):
-    """Fetches the list of logs, optionally filtered by date."""
+    """
+    Retrieves log entries filtered by date range.
+    
+    Args:
+        session (Session): Active Snowflake session object
+        start_date (datetime, optional): Start date for filtering logs
+        end_date (datetime, optional): End date for filtering logs
+        
+    Returns:
+        pandas.DataFrame: DataFrame containing filtered log entries
+    """
     create_logs_table(session)
     if start_date and end_date:
         # Format the dates properly for Snowflake SQL
@@ -140,6 +208,18 @@ def fetch_logs(session: Session, start_date=None, end_date=None):
     return session.sql(query).to_pandas()
 
 def display_notification(session: Session):
+    """
+    Displays a Streamlit interface for viewing notifications and logs.
+    
+    Creates an interactive UI with:
+    - Toggle between notifications and logs view
+    - Date range filtering
+    - Refresh button
+    - Data display in tabular format
+    
+    Args:
+        session (Session): Active Snowflake session object
+    """
     # Show Logs checkbox at the top, and dynamically change title
     show_logs = st.checkbox("Show Logs", key="log_checkbox")
 

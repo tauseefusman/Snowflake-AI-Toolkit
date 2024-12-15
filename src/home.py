@@ -2,6 +2,23 @@ import streamlit as st
 from src.utils import *
 
 def display_home(session):
+    """
+    Displays the home page of the Snowflake AI Toolkit application.
+    
+    This function creates a visually appealing landing page with information about
+    Snowflake Cortex and the application's features. It includes styled sections for:
+    - Header with application title
+    - Introduction to Snowflake Cortex
+    - Overview of the Streamlit UI
+    - Available features and functionality
+    - Call to action button
+    
+    Args:
+        session: Snowflake session object used for database operations
+        
+    The function uses custom CSS styling to create a cohesive Snowflake-themed design
+    with responsive sections and interactive elements.
+    """
     # Apply custom CSS styles for a Snowflake blue-themed layout
     st.markdown("""
         <style>
@@ -83,7 +100,7 @@ def display_home(session):
             <div class="section-content">
                 This Streamlit-based UI offers a no-code solution for exploring the full range of Snowflake Cortex functionalities. With an easy-to-use interface, you can experiment with Cortex's powerful AI capabilities without writing a single line of code.
                 <br><br>
-                Whether you're generating text completions, performing sentiment analysis, or extracting specific data from large datasets, this platform allows you to effortlessly explore these features, test your ideas, and build AI-driven applications within Snowflake’s secure environment.
+                Whether you're generating text completions, performing sentiment analysis, or extracting specific data from large datasets, this platform allows you to effortlessly explore these features, test your ideas, and build AI-driven applications within Snowflake's secure environment.
             </div>
         </div>
     """, unsafe_allow_html=True)

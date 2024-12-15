@@ -10,10 +10,17 @@ with open(config_path, "r") as f:
     config = json.load(f)
 
 
-
-
 def format_and_display_result(result, question):
-    """Formats and displays the result in a consistent manner."""
+    """
+    Formats and displays the completion result in Streamlit.
+    
+    Args:
+        result (str): JSON string containing the completion result
+        question (str): The original question/prompt that was asked
+        
+    Raises:
+        Exception: If result formatting or display fails
+    """
     try:
         # Parse the result JSON
         result_json = json.loads(result)
@@ -37,7 +44,21 @@ def format_and_display_result(result, question):
 
 
 def execute_query_and_get_result(session, prompt, model, functionality):
-    """Executes a query and retrieves the result with error handling."""
+    """
+    Executes a Snowflake query to get completion results.
+    
+    Args:
+        session: Snowflake session object
+        prompt (str): The prompt to send to the model
+        model (str): The model name to use
+        functionality (str): The type of operation being performed
+        
+    Returns:
+        str: The completion result from the model
+        
+    Raises:
+        Exception: If query execution fails
+    """
     try:
         query = f"""
         SELECT SNOWFLAKE.CORTEX.COMPLETE(
@@ -63,9 +84,25 @@ def execute_query_and_get_result(session, prompt, model, functionality):
         raise e
     
 
-
 def execute_fine_tune_query(session, db, schema, train_table, validation_table, base_model, new_model_name):
-    """Executes the fine-tune query and returns the tracking ID."""
+    """
+    Executes a query to start fine-tuning a model.
+    
+    Args:
+        session: Snowflake session object
+        db (str): Database name
+        schema (str): Schema name
+        train_table (str): Training data table name
+        validation_table (str): Validation data table name
+        base_model (str): Base model to fine-tune
+        new_model_name (str): Name for the fine-tuned model
+        
+    Returns:
+        str: Tracking ID for the fine-tuning job
+        
+    Raises:
+        RuntimeError: If fine-tune query execution fails
+    """
     query = f"""
     SELECT SNOWFLAKE.CORTEX.FINETUNE(
         'CREATE',
@@ -83,7 +120,19 @@ def execute_fine_tune_query(session, db, schema, train_table, validation_table, 
 
 
 def execute_fine_tune_status_query(session, tracking_id):
-    """Fetches the fine-tune status for the given tracking ID."""
+    """
+    Fetches the status of a fine-tuning job.
+    
+    Args:
+        session: Snowflake session object
+        tracking_id (str): ID of the fine-tuning job
+        
+    Returns:
+        str: JSON string containing status information
+        
+    Raises:
+        RuntimeError: If status query fails
+    """
     query = f"""
     SELECT SNOWFLAKE.CORTEX.FINETUNE(
         'DESCRIBE',
@@ -98,7 +147,18 @@ def execute_fine_tune_status_query(session, tracking_id):
 
 
 def fetch_fine_tuned_models(session):
-    """Fetches the list of fine-tuned models."""
+    """
+    Retrieves a list of all fine-tuned models.
+    
+    Args:
+        session: Snowflake session object
+        
+    Returns:
+        list: Names of available fine-tuned models
+        
+    Raises:
+        RuntimeError: If model fetching fails
+    """
     query = "SHOW MODELS"
     try:
         models = session.sql(query).collect()
@@ -113,6 +173,19 @@ def fetch_fine_tuned_models(session):
 
 
 def execute_fine_tune_status_query(session, tracking_id):
+    """
+    Fetches detailed status information for a fine-tuning job.
+    
+    Args:
+        session: Snowflake session object
+        tracking_id (str): ID of the fine-tuning job
+        
+    Returns:
+        str: JSON string containing detailed status information
+        
+    Raises:
+        RuntimeError: If status query fails
+    """
     query = f"""
     SELECT SNOWFLAKE.CORTEX.FINETUNE(
         'DESCRIBE',
@@ -126,6 +199,18 @@ def execute_fine_tune_status_query(session, tracking_id):
         raise RuntimeError(f"Failed to fetch fine-tune status for Tracking ID {tracking_id}: {e}")
 
 def format_fine_tune_status_result(status_json):
+    """
+    Formats the fine-tune status JSON into a pandas DataFrame.
+    
+    Args:
+        status_json (str): JSON string containing fine-tune status
+        
+    Returns:
+        pandas.DataFrame: Formatted status information
+        
+    Raises:
+        ValueError: If JSON parsing fails
+    """
     try:
         status_data = json.loads(status_json)
 
@@ -147,4 +232,3 @@ def format_fine_tune_status_result(status_json):
         return pd.DataFrame(table_data)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse the fine-tune status JSON: {e}")
-

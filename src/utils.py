@@ -16,7 +16,9 @@ with open(config_path, "r") as f:
 def render_image(filepath: str):
     """
     Renders an image in Streamlit from a filepath.
-    filepath: path to the image. Must have a valid file extension.
+    
+    Args:
+        filepath (str): Path to the image file. Must have a valid file extension.
     """
     mime_type = filepath.split('.')[-1:][0].lower()
     with open(filepath, "rb") as f:
@@ -32,25 +34,75 @@ def render_image(filepath: str):
 
 
 def list_databases(session):
-    """List all databases."""
+    """
+    Lists all databases in Snowflake.
+    
+    Args:
+        session: Snowflake session object
+        
+    Returns:
+        list: List of database names
+    """
     return [row["name"] for row in session.sql("SHOW DATABASES").collect()]
 
 def list_schemas(session, database: str):
-    """List schemas in the specified database."""
+    """
+    Lists schemas in the specified database.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        
+    Returns:
+        list: List of schema names
+    """
     return [row["name"] for row in session.sql(f"SHOW SCHEMAS IN {database}").collect()]
 
 def list_stages(session, database: str, schema: str):
-    """List stages in the specified database and schema."""
+    """
+    Lists stages in the specified database and schema.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        
+    Returns:
+        list: List of stage names
+    """
     stages = [stage["name"] for stage in session.sql(f"SHOW STAGES IN {database}.{schema}").collect()]
     return stages
 
 def list_files_in_stage(session, database: str, schema: str, stage: str):
-    """List files in the specified stage."""
+    """
+    Lists files in the specified stage.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        stage (str): Name of the stage
+        
+    Returns:
+        list: List of file names in the stage
+    """
     stage_path = f"@{database}.{schema}.{stage}"
     files = [file["name"] for file in session.sql(f"LIST {stage_path}").collect()]
     return files
 
 def list_file_details_in_stage(session, database, schema, stage_name):
+    """
+    Lists detailed information about files in the specified stage.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        stage_name (str): Name of the stage
+        
+    Returns:
+        list: List of dictionaries containing file details (name, size, last modified)
+    """
     stage_path = f"@{database}.{schema}.{stage_name}"
     query = f"LIST {stage_path}"
     try:
@@ -69,20 +121,65 @@ def list_file_details_in_stage(session, database, schema, stage_name):
 
 
 def list_tables(session, database: str, schema: str):
-    """List tables in the specified database and schema."""
+    """
+    Lists tables in the specified database and schema.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        
+    Returns:
+        list: List of table names
+    """
     tables = [table["name"] for table in session.sql(f"SHOW TABLES IN {database}.{schema}").collect()]
     return tables
 
 def list_columns(session, database: str, schema: str, table: str):
-    """List columns in the specified table."""
+    """
+    Lists columns in the specified table.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        table (str): Name of the table
+        
+    Returns:
+        list: List of column names
+    """
     return [row["column_name"] for row in session.sql(f"SHOW COLUMNS IN {database}.{schema}.{table}").collect()]
 
 def show_spinner(message: str):
-    """Display a spinner with a custom message."""
+    """
+    Displays a spinner with a custom message in Streamlit.
+    
+    Args:
+        message (str): Message to display with the spinner
+        
+    Yields:
+        None
+    """
     with st.spinner(message):
         yield
 
 def validate_table_columns(session, database, schema, table, required_columns):
+    """
+    Validates that a table has all required columns.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        table (str): Name of the table
+        required_columns (list): List of required column names
+        
+    Returns:
+        list: List of missing column names
+        
+    Raises:
+        RuntimeError: If column validation fails
+    """
     try:
         # Query to get the column names in the specified table
         query = f"SHOW COLUMNS IN {database}.{schema}.{table}"
@@ -100,7 +197,23 @@ def validate_table_columns(session, database, schema, table, required_columns):
 
 
 def create_prompt_for_rag(session, question: str, rag: bool, column: str, database: str, schema: str, table: str,embedding_type:str,embedding_model:str):
-    """Create a prompt for RAG."""
+    """
+    Creates a prompt for Retrieval-Augmented Generation (RAG).
+    
+    Args:
+        session: Snowflake session object
+        question (str): User's question
+        rag (bool): Whether to use RAG
+        column (str): Column name containing embeddings
+        database (str): Name of the database
+        schema (str): Name of the schema
+        table (str): Name of the table
+        embedding_type (str): Type of embedding
+        embedding_model (str): Name of the embedding model
+        
+    Returns:
+        str: Generated prompt
+    """
     if rag and column:
         cmd = f"""
         WITH results AS (
@@ -122,32 +235,81 @@ def create_prompt_for_rag(session, question: str, rag: bool, column: str, databa
         return prompt
 
 def get_cortex_complete_result(session, query: str):
-    """Execute Cortex complete query and return the result."""
+    """
+    Executes a Cortex complete query and returns the result.
+    
+    Args:
+        session: Snowflake session object
+        query (str): SQL query to execute
+        
+    Returns:
+        str: Query result
+    """
     return session.sql(query).collect()[0][0]
 
 def list_existing_models(session):
-    """List existing models."""
+    """
+    Lists existing models in Snowflake.
+    
+    Args:
+        session: Snowflake session object
+        
+    Returns:
+        list: List of model names
+    """
     query = "SHOW MODELS"  # Hypothetical query to show models
     return [model["name"] for model in session.sql(query).collect()]
 
 def list_fine_tuned_models(session):
-    """List fine-tuned models."""
+    """
+    Lists fine-tuned models in Snowflake.
+    
+    Args:
+        session: Snowflake session object
+        
+    Returns:
+        list: List of fine-tuned model names
+    """
     query = "SHOW FINE_TUNED_MODELS"  # Hypothetical query to show fine-tuned models
     return [model["name"] for model in session.sql(query).collect()]
 
 def get_table_preview(session, database, schema, table):
-    """Fetch a preview of the top 5 rows from the table."""
+    """
+    Fetches a preview of the top 5 rows from a table.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        table (str): Name of the table
+        
+    Returns:
+        pandas.DataFrame: DataFrame containing preview data
+    """
     query = f"SELECT * FROM {database}.{schema}.{table} LIMIT 5"
     df = session.sql(query).to_pandas()
     return df
 
 def load_css(filepath):
-    """Load custom CSS file."""
+    """
+    Loads and applies custom CSS from a file.
+    
+    Args:
+        filepath (str): Path to the CSS file
+    """
     with open(filepath) as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 def format_result(result_json):
-    """Format the result from a Cortex query."""
+    """
+    Formats the result from a Cortex query.
+    
+    Args:
+        result_json (dict): JSON response from Cortex
+        
+    Returns:
+        dict: Formatted result containing messages, model used, and usage statistics
+    """
     messages = result_json.get('choices', [{}])[0].get('messages', 'No messages found')
     model_used = result_json.get('model', 'No model specified')
     usage = result_json.get('usage', {})
@@ -158,13 +320,25 @@ def format_result(result_json):
     }
 
 def write_result_to_output_table(session, output_table, output_column, result):
-    """Writes the result to the specified output table and column."""
+    """
+    Writes a result to the specified output table and column.
+    
+    Args:
+        session: Snowflake session object
+        output_table (str): Name of the output table
+        output_column (str): Name of the output column
+        result: Result to write
+    """
     insert_query = f"INSERT INTO {output_table} ({output_column}) VALUES (?)"
     session.sql(insert_query, [result]).collect()
 
 def create_database_and_stage_if_not_exists(session: Session):
-    """Creates the CORTEX_TOOLKIT database and MY_STAGE stage if they do not already exist."""
-
+    """
+    Creates the CORTEX_TOOLKIT database and MY_STAGE stage if they do not already exist.
+    
+    Args:
+        session (Session): Snowflake session object
+    """
     # Fetch database and stage details from the config file
     database_name = config["snowflake"]["database"]
     stage_name = config["snowflake"]["stage"]
@@ -190,7 +364,18 @@ def create_database_and_stage_if_not_exists(session: Session):
         #print(f"Stage '{stage_name}' already exists in '{database_name}'. Skipping creation.")
 
 def create_stage(session, database, schema, stage_name):
-    """Creates a stage in the specified database and schema."""
+    """
+    Creates a stage in the specified database and schema.
+    
+    Args:
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        stage_name (str): Name of the stage to create
+        
+    Raises:
+        SnowparkSQLException: If stage creation fails
+    """
     query = f"CREATE STAGE IF NOT EXISTS {database}.{schema}.{stage_name}"
     try:
         session.sql(query).collect()
@@ -204,11 +389,14 @@ def upload_file_to_stage(session, database, schema, stage_name, file):
     Uploads a file to the specified stage in Snowflake using the PUT command.
 
     Args:
-        session: Snowflake session.
-        database: Database name.
-        schema: Schema name.
-        stage_name: Stage name where the file will be uploaded.
-        file: File object from Streamlit file uploader.
+        session: Snowflake session object
+        database (str): Name of the database
+        schema (str): Name of the schema
+        stage_name (str): Name of the stage where the file will be uploaded
+        file: File object from Streamlit file uploader
+        
+    Raises:
+        Exception: If file upload fails
     """
     import tempfile
     import os
@@ -246,7 +434,14 @@ def upload_file_to_stage(session, database, schema, stage_name, file):
 
 
 def show_toast_message(message, duration=3, toast_type="info"):
-    """Displays a toast message in Streamlit using a temporary container."""
+    """
+    Displays a toast message in Streamlit using a temporary container.
+    
+    Args:
+        message (str): Message to display in the toast
+        duration (int, optional): Duration in seconds to show the toast. Defaults to 3.
+        toast_type (str, optional): Type of toast ("info", "success", "warning", "error"). Defaults to "info".
+    """
     # Define color styles based on the toast type
     toast_colors = {
         "info": "#007bff",
@@ -286,7 +481,15 @@ def show_toast_message(message, duration=3, toast_type="info"):
     toast_container.empty()
 
 def setup_pdf_text_chunker(session):
-    """Sets up the pdf_text_chunker UDF in the current database and schema."""
+    """
+    Sets up the pdf_text_chunker UDF in the current database and schema.
+    
+    Args:
+        session: Snowflake session object
+        
+    Note:
+        Creates a Python UDF that can process PDF files and split them into text chunks
+    """
     # Check if UDF already exists
     try:
         udf_check_query = "SHOW USER FUNCTIONS LIKE 'pdf_text_chunker'"
@@ -344,5 +547,4 @@ class pdf_text_chunker:
         #st.success("UDF pdf_text_chunker created successfully.")
     except Exception as e:
         st.error(f"Error creating UDF: {e}")
-
 

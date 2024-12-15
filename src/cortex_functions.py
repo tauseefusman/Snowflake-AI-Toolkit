@@ -4,7 +4,14 @@ import streamlit as st
 
 
 def escape_sql_string(s):
-    """Helper function to escape single quotes in SQL strings."""
+    """Helper function to escape single quotes in SQL strings.
+    
+    Args:
+        s (str): The SQL string to escape.
+        
+    Returns:
+        str: The escaped SQL string with single quotes doubled.
+    """
     return s.replace("'", "''")
 
 
@@ -44,7 +51,23 @@ def check_and_create_table(session, db, schema, table, columns):
 
 
 def get_complete_result(session, model, prompt, temperature, max_tokens, guardrails, system_prompt=None):
-    """Handles the Complete functionality in playground mode."""
+    """Handles the Complete functionality in playground mode.
+    
+    Args:
+        session: Snowflake session.
+        model (str): The model to use for completion.
+        prompt (str): The user prompt text.
+        temperature (float): Temperature parameter for generation.
+        max_tokens (int): Maximum tokens to generate.
+        guardrails (bool): Whether to enable guardrails.
+        system_prompt (str, optional): System prompt to prepend.
+        
+    Returns:
+        dict: The completion result from the model.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     messages = []
     if system_prompt:
         messages.append({'role': 'system', 'content': system_prompt})
@@ -69,9 +92,123 @@ def get_complete_result(session, model, prompt, temperature, max_tokens, guardra
     except SnowparkSQLException as e:
         raise e
 
+def get_translation(session, text, source_lang, target_lang):
+    """Handles the Translate functionality in playground mode using SQL.
+    
+    Args:
+        session: Snowflake session.
+        text (str): Text to translate.
+        source_lang (str): Source language code.
+        target_lang (str): Target language code.
+        
+    Returns:
+        str: The translated text.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.TRANSLATE('{escape_sql_string(text)}', '{source_lang}', '{target_lang}');
+    """
+    try:
+        result = session.sql(query).collect()[0][0]
+        return result
+    except SnowparkSQLException as e:
+        raise e
+
+
+def get_summary(session, text):
+    """Handles the Summarize functionality in playground mode using SQL.
+    
+    Args:
+        session: Snowflake session.
+        text (str): Text to summarize.
+        
+    Returns:
+        str: The summarized text.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.SUMMARIZE('{escape_sql_string(text)}');
+    """
+    try:
+        result = session.sql(query).collect()[0][0]
+        return result
+    except SnowparkSQLException as e:
+        raise e
+
+
+def get_extraction(session, text, query_text):
+    """Handles the Extract functionality in playground mode using SQL.
+    
+    Args:
+        session: Snowflake session.
+        text (str): Source text to extract from.
+        query_text (str): Query text to guide extraction.
+        
+    Returns:
+        str: The extracted answer.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
+    query_text_escaped = escape_sql_string(query_text)
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER('{escape_sql_string(text)}', '{query_text_escaped}');
+    """
+    try:
+        result = session.sql(query).collect()[0][0]
+        return result
+    except SnowparkSQLException as e:
+        raise e
+
+
+def get_sentiment(session, text):
+    """Handles the Sentiment functionality in playground mode using SQL.
+    
+    Args:
+        session: Snowflake session.
+        text (str): Text to analyze sentiment.
+        
+    Returns:
+        str: The sentiment analysis result.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
+    query = f"""
+    SELECT SNOWFLAKE.CORTEX.SENTIMENT('{escape_sql_string(text)}');
+    """
+    try:
+        result = session.sql(query).collect()[0][0]
+        return result
+    except SnowparkSQLException as e:
+        raise e
+    
 
 def get_complete_result_from_column(session, model, db, schema, table, input_column, temperature, max_tokens, guardrails, output_table, output_column, system_prompt=None, user_prompt=None):
-    """Fetches content from a column and writes the completion result to an output table."""
+    """Fetches content from a column and writes the completion result to an output table.
+    
+    Args:
+        session: Snowflake session.
+        model (str): The model to use for completion.
+        db (str): Database name.
+        schema (str): Schema name.
+        table (str): Input table name.
+        input_column (str): Column containing input text.
+        temperature (float): Temperature parameter for generation.
+        max_tokens (int): Maximum tokens to generate.
+        guardrails (bool): Whether to enable guardrails.
+        output_table (str): Table to write results to.
+        output_column (str): Column to write results to.
+        system_prompt (str, optional): System prompt to prepend.
+        user_prompt (str, optional): User prompt template.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     
     # Check if the output table and column exist, and create/add the column if necessary
     columns = [
@@ -120,62 +257,23 @@ def get_complete_result_from_column(session, model, db, schema, table, input_col
         raise e
 
 
-
-# Translation function for playground mode using SQL
-def get_translation(session, text, source_lang, target_lang):
-    """Handles the Translate functionality in playground mode using SQL."""
-    query = f"""
-    SELECT SNOWFLAKE.CORTEX.TRANSLATE('{escape_sql_string(text)}', '{source_lang}', '{target_lang}');
-    """
-    try:
-        result = session.sql(query).collect()[0][0]
-        return result
-    except SnowparkSQLException as e:
-        raise e
-
-
-# Summary function for playground mode using SQL
-def get_summary(session, text):
-    """Handles the Summarize functionality in playground mode using SQL."""
-    query = f"""
-    SELECT SNOWFLAKE.CORTEX.SUMMARIZE('{escape_sql_string(text)}');
-    """
-    try:
-        result = session.sql(query).collect()[0][0]
-        return result
-    except SnowparkSQLException as e:
-        raise e
-
-
-# Extraction function for playground mode using SQL
-def get_extraction(session, text, query_text):
-    """Handles the Extract functionality in playground mode using SQL."""
-    query_text_escaped = escape_sql_string(query_text)
-    query = f"""
-    SELECT SNOWFLAKE.CORTEX.EXTRACT_ANSWER('{escape_sql_string(text)}', '{query_text_escaped}');
-    """
-    try:
-        result = session.sql(query).collect()[0][0]
-        return result
-    except SnowparkSQLException as e:
-        raise e
-
-
-# Sentiment function for playground mode using SQL
-def get_sentiment(session, text):
-    """Handles the Sentiment functionality in playground mode using SQL."""
-    query = f"""
-    SELECT SNOWFLAKE.CORTEX.SENTIMENT('{escape_sql_string(text)}');
-    """
-    try:
-        result = session.sql(query).collect()[0][0]
-        return result
-    except SnowparkSQLException as e:
-        raise e
-
-
 def get_translation_from_column(session, db, schema, table, input_column, source_lang, target_lang, output_table, output_column):
-    """Fetches content from a column and writes the translation result to an output table."""
+    """Fetches content from a column and writes the translation result to an output table.
+    
+    Args:
+        session: Snowflake session.
+        db (str): Database name.
+        schema (str): Schema name.
+        table (str): Input table name.
+        input_column (str): Column containing text to translate.
+        source_lang (str): Source language code.
+        target_lang (str): Target language code.
+        output_table (str): Table to write results to.
+        output_column (str): Column to write results to.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     columns = [
         f"{input_column} VARCHAR(16777216)",
         f"{output_column} VARCHAR(16777216)"
@@ -187,8 +285,8 @@ def get_translation_from_column(session, db, schema, table, input_column, source
     output_table_full = f"{db}.{schema}.{output_table}"
 
     query = f"""
-    INSERT INTO {output_table_full} ({output_column})
-    SELECT CAST(SNOWFLAKE.CORTEX.TRANSLATE({input_column}, '{source_lang}', '{target_lang}') AS STRING)
+    INSERT INTO {output_table_full} ({input_column}, {output_column})
+    SELECT {input_column}, CAST(SNOWFLAKE.CORTEX.TRANSLATE({input_column}, '{source_lang}', '{target_lang}') AS STRING)
     FROM {source_table_full};
     """
     try:
@@ -198,7 +296,20 @@ def get_translation_from_column(session, db, schema, table, input_column, source
 
 
 def get_summary_from_column(session, db, schema, table, input_column, output_table, output_column):
-    """Fetches content from a column and writes the summary result to an output table."""
+    """Fetches content from a column and writes the summary result to an output table.
+    
+    Args:
+        session: Snowflake session.
+        db (str): Database name.
+        schema (str): Schema name.
+        table (str): Input table name.
+        input_column (str): Column containing text to summarize.
+        output_table (str): Table to write results to.
+        output_column (str): Column to write results to.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     columns = [
         f"{input_column} VARCHAR(16777216)",
         f"{output_column} VARCHAR(16777216)"
@@ -210,8 +321,8 @@ def get_summary_from_column(session, db, schema, table, input_column, output_tab
     output_table_full = f"{db}.{schema}.{output_table}"
 
     query = f"""
-    INSERT INTO {output_table_full} ({output_column})
-    SELECT CAST(SNOWFLAKE.CORTEX.SUMMARIZE({input_column}) AS STRING)
+    INSERT INTO {output_table_full} ({input_column}, {output_column})
+    SELECT {input_column}, CAST(SNOWFLAKE.CORTEX.SUMMARIZE({input_column}) AS STRING)
     FROM {source_table_full};
     """
     try:
@@ -219,9 +330,22 @@ def get_summary_from_column(session, db, schema, table, input_column, output_tab
     except SnowparkSQLException as e:
         raise e
 
-
 def get_extraction_from_column(session, db, schema, table, input_column, query_text, output_table, output_column):
-    """Fetches content from a column and writes the extracted answer to an output table."""
+    """Fetches content from a column and writes the extracted answer to an output table.
+    
+    Args:
+        session: Snowflake session.
+        db (str): Database name.
+        schema (str): Schema name.
+        table (str): Input table name.
+        input_column (str): Column containing source text.
+        query_text (str): Query text to guide extraction.
+        output_table (str): Table to write results to.
+        output_column (str): Column to write results to.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     columns = [
         f"{input_column} VARCHAR(16777216)",
         f"{output_column} VARCHAR(16777216)"
@@ -235,8 +359,8 @@ def get_extraction_from_column(session, db, schema, table, input_column, query_t
     query_text_escaped = escape_sql_string(query_text)
 
     query = f"""
-    INSERT INTO {output_table_full} ({output_column})
-    SELECT CAST(SNOWFLAKE.CORTEX.EXTRACT_ANSWER({input_column}, '{query_text_escaped}') AS STRING)
+    INSERT INTO {output_table_full} ({input_column}, {output_column})
+    SELECT {input_column}, CAST(SNOWFLAKE.CORTEX.EXTRACT_ANSWER({input_column}, '{query_text_escaped}') AS STRING)
     FROM {source_table_full};
     """
     try:
@@ -246,7 +370,20 @@ def get_extraction_from_column(session, db, schema, table, input_column, query_t
 
 
 def get_sentiment_from_column(session, db, schema, table, input_column, output_table, output_column):
-    """Fetches content from a column and writes the sentiment analysis result to an output table."""
+    """Fetches content from a column and writes the sentiment analysis result to an output table.
+    
+    Args:
+        session: Snowflake session.
+        db (str): Database name.
+        schema (str): Schema name.
+        table (str): Input table name.
+        input_column (str): Column containing text to analyze.
+        output_table (str): Table to write results to.
+        output_column (str): Column to write results to.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     columns = [
         f"{input_column} VARCHAR(16777216)",
         f"{output_column} VARCHAR(16777216)"
@@ -258,8 +395,8 @@ def get_sentiment_from_column(session, db, schema, table, input_column, output_t
     output_table_full = f"{db}.{schema}.{output_table}"
 
     query = f"""
-    INSERT INTO {output_table_full} ({output_column})
-    SELECT CAST(SNOWFLAKE.CORTEX.SENTIMENT({input_column}) AS STRING)
+    INSERT INTO {output_table_full} ({input_column}, {output_column})
+    SELECT {input_column}, CAST(SNOWFLAKE.CORTEX.SENTIMENT({input_column}) AS STRING)
     FROM {source_table_full};
     """
     try:
@@ -269,7 +406,20 @@ def get_sentiment_from_column(session, db, schema, table, input_column, output_t
 
     
 def create_vector_embedding_from_stage(session, db, schema, stage, embedding_type, embedding_model,output_table):
-    """Creates vector embeddings for all files in a selected stage."""
+    """Creates vector embeddings for all files in a selected stage.
+    
+    Args:
+        session: Snowflake session.
+        db (str): Database name.
+        schema (str): Schema name.
+        stage (str): Stage name containing files.
+        embedding_type (str): Type of embedding to create.
+        embedding_model (str): Model to use for embeddings.
+        output_table (str): Table to write embeddings to.
+        
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
     stage_path = f"@{db}.{schema}.{stage}"
     output_table_full = f"{db}.{schema}.{output_table}"
 
@@ -305,7 +455,6 @@ def create_vector_embedding_from_stage(session, db, schema, stage, embedding_typ
     except SnowparkSQLException as e:
         st.error(f"Failed to create embeddings: {e}")
         raise e
-
 
 
 

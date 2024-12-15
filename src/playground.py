@@ -12,7 +12,17 @@ with open(config_path, "r") as f:
 
 
 def execute_functionality(session, functionality, input_data, settings):
-    """Executes the selected functionality for playground mode."""
+    """
+    Executes the selected functionality in playground mode.
+    
+    Args:
+        session: Snowflake session object for database operations
+        functionality (str): The selected functionality to execute ("Complete", "Translate", etc.)
+        input_data (dict): Dictionary containing input data for the selected functionality
+        settings (dict): Dictionary containing settings for the selected functionality
+        
+    Displays the results of the executed functionality using Streamlit components.
+    """
     if functionality == "Complete":
         result_json = get_complete_result(
             session, settings['model'], input_data['prompt'],
@@ -40,7 +50,16 @@ def execute_functionality(session, functionality, input_data, settings):
         st.write(f"**Sentiment Analysis Result:** {result}")
 
 def get_functionality_settings(functionality, config):
-    """Returns settings based on functionality from config."""
+    """
+    Returns settings based on the selected functionality from config.
+    
+    Args:
+        functionality (str): The selected functionality ("Complete", "Translate", etc.)
+        config (dict): Configuration dictionary containing default settings
+        
+    Returns:
+        dict: Dictionary containing the settings for the selected functionality
+    """
     settings = {}
     defaults = config["default_settings"]
 
@@ -57,7 +76,15 @@ def get_functionality_settings(functionality, config):
     return settings
 
 def get_playground_input(functionality):
-    """Returns input data for playground mode."""
+    """
+    Returns input data for playground mode based on selected functionality.
+    
+    Args:
+        functionality (str): The selected functionality ("Complete", "Translate", etc.)
+        
+    Returns:
+        dict: Dictionary containing the input data for the selected functionality
+    """
     input_data = {}
     
     if functionality == "Complete":
@@ -75,6 +102,18 @@ def get_playground_input(functionality):
     return input_data
 
 def display_playground(session):
+    """
+    Displays the playground mode interface in Streamlit.
+    
+    Args:
+        session: Snowflake session object for database operations
+        
+    Creates an interactive interface allowing users to:
+    - Select different functionalities (Complete, Translate, etc.)
+    - Configure settings for the selected functionality
+    - Input data and execute the functionality
+    - View results or error messages
+    """
     st.title("Playground Mode")
 
     # Dropdown to choose the functionality

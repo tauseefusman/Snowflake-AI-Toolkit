@@ -15,7 +15,19 @@ with open(config_path, "r") as f:
     config = json.load(f)
 
 async def async_execute_functionality(session, functionality, input_data, settings, notification_id):
-    """Executes the selected functionality asynchronously and updates the notification status."""
+    """
+    Executes the selected functionality asynchronously and updates the notification status.
+
+    Args:
+        session (snowflake.snowpark.Session): Active Snowflake session.
+        functionality (str): The functionality to execute (e.g., 'Complete', 'Translate', etc.).
+        input_data (dict): Input data containing database, schema, table, column, and output details.
+        settings (dict): Configuration settings for the functionality.
+        notification_id (str): ID of the notification entry to update.
+
+    Raises:
+        Exception: If an error occurs during execution.
+    """
     try:
         if functionality == "Complete":
             await asyncio.sleep(1)
@@ -55,14 +67,21 @@ async def async_execute_functionality(session, functionality, input_data, settin
         st.success("Operation completed successfully. Check the notification screen.")
     except Exception as e:
         # Log the error and update notification to 'Failed'
-        print("trying to write error")
         update_notification_entry(session, notification_id, 'Failed')
         add_log_entry(session, functionality, str(e))
         st.error("Operation failed. Check logs in the notification screen.")
         raise e
 
 def trigger_async_operation(session, functionality, input_data, settings):
-    """Trigger async operation for non-playground mode."""
+    """
+    Triggers an asynchronous operation for a specified functionality.
+
+    Args:
+        session (snowflake.snowpark.Session): Active Snowflake session.
+        functionality (str): The functionality to execute.
+        input_data (dict): Input data for the operation.
+        settings (dict): Configuration settings for the functionality.
+    """
     details = f"Running {functionality} on {input_data['table']} table"
     notification_id = add_notification_entry(session, functionality, 'In-Progress', details)
 
@@ -71,7 +90,16 @@ def trigger_async_operation(session, functionality, input_data, settings):
     thread.start()
 
 def get_functionality_settings(functionality, config):
-    """Returns settings based on functionality from config."""
+    """
+    Retrieves settings for the specified functionality based on the configuration.
+
+    Args:
+        functionality (str): The functionality to configure (e.g., 'Complete', 'Translate').
+        config (dict): Configuration file content.
+
+    Returns:
+        dict: Settings for the functionality.
+    """
     settings = {}
     defaults = config["default_settings"]
 
@@ -90,7 +118,16 @@ def get_functionality_settings(functionality, config):
     return settings
 
 def get_non_playground_input(session, functionality):
-    """Returns input data for non-playground mode (dropdown-based)."""
+    """
+    Retrieves input data from the user for non-playground mode using dropdown-based selections.
+
+    Args:
+        session (snowflake.snowpark.Session): Active Snowflake session.
+        functionality (str): The functionality being configured.
+
+    Returns:
+        dict: Input data for the selected functionality, including database, schema, table, column, and output details.
+    """
     st.subheader("Select Source Table")
     
     # Database and schema selections at the same level
@@ -116,15 +153,9 @@ def get_non_playground_input(session, functionality):
         query = st.text_input("Enter your query for extraction:", placeholder="Type your query here...")
 
     st.subheader("Select Output Table and Column")
-    output_table_mode = st.checkbox("Use Existing Output Table", value=True)
-
+ 
     col5, col6 = st.columns(2)
-    if output_table_mode:
-        output_tables = list_tables(session, database, schema)
-        output_table = col5.selectbox("Select Output Table", output_tables if output_tables else ["No tables available"], disabled=not schema)
-    else:
-        output_table = col5.text_input("Enter New Output Table Name", placeholder="New output table")
-
+    output_table = col5.text_input("Enter New Output Table Name", placeholder="New output table")
     output_column = col6.text_input("Output Column Name", placeholder="Enter output column name")
 
     input_data = {
@@ -142,6 +173,15 @@ def get_non_playground_input(session, functionality):
     return input_data
 
 def display_build(session):
+    """
+    Displays the build mode interface in the Streamlit app.
+
+    Args:
+        session (snowflake.snowpark.Session): Active Snowflake session.
+
+    Raises:
+        SnowparkSQLException: If there is an issue with Snowflake queries.
+    """
     st.title("Build Mode")
 
     # Extend the functionality options to include RAG and Fine Tune
@@ -152,15 +192,12 @@ def display_build(session):
     if functionality != "Select Functionality":
         # If RAG or Fine Tune is selected, load their respective modules
         if functionality == "RAG":
-            #st.subheader("Running RAG")
             rag.display_rag(session)
         elif functionality == "Fine Tune":
-            #st.subheader("Running Fine Tune")
             fine_tune.display_fine_tune(session)
         else:
             # For other functionalities, continue with the existing flow
             settings = get_functionality_settings(functionality, config)
-            print(settings)
             input_data = get_non_playground_input(session, functionality)
 
             if st.button(f"Run {functionality}"):
