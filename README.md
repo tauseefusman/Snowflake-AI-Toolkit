@@ -86,6 +86,7 @@ Replace the placeholders (`<your_account>`, `<your_username>`, etc.) with your a
 
 | File/Directory                      | Description                                      |
 |-------------------------------------|--------------------------------------------------|
+| [data/](data/)                      | Sample data for testing and demonstration        |
 | [src/](src/)                        | Source code for setup and styling                |
 | [src/setup.py](src/setup.py)        | Setup and initialization code                    |
 | [src/styles.css](src/styles.css)    | Custom styling                                   |
