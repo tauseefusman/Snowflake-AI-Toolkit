@@ -19,6 +19,13 @@ A dedicated section for constructing and deploying data pipelines and workflows 
 ### Notification
 A notification system that keeps users informed about task completions, error messages as logs ensuring smooth operation monitoring.
 
+## Product Demo
+
+![Snowflake Cortex Demo](assets/demo.gif)
+
+Experience the power and simplicity of the Snowflake Cortex Demo App in action. The demo showcases key features including the interactive playground, build functionality, and notification system.
+
+
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
