@@ -1,10 +1,7 @@
-# Snowflake Cortex Demo App
+# Snowflake AI Toolkit
+Snowflake AI Toolkit is an AI Accelerator and Playground for enabling AI in Snowflake. It is an Plug and Play Streamlit based Native App that can be used to explore, learn and build rapid prototypes of AI Solutions in Snowflake powered by the Snowflake's Cortex and AI Functions. 
 
-A no-code environment powered by Streamlit for interacting with Snowflake Cortex functionalities. This application allows users to seamlessly integrate and utilize Snowflake's powerful data processing capabilities through an intuitive web interface.
-
-## Features
-
-The application provides several key features:
+# Features
 
 ### Playground
 An interactive environment where users can experiment with Snowflake Cortex functions, test prompts, and and play around with cortex functions.
@@ -15,16 +12,7 @@ A dedicated section for constructing and deploying data pipelines and workflows 
 - Retrieval-Augmented Generation (RAG) for question answering with your own data
 - Fine-tuning large language models on your custom datasets
 
-
-### Notification
-A notification system that keeps users informed about task completions, error messages as logs ensuring smooth operation monitoring.
-
-## Product Demo
-
 ![Snowflake Cortex Demo](assets/demo.gif)
-
-Experience the power and simplicity of the Snowflake Cortex Demo App in action. The demo showcases key features including the interactive playground, build , and RAG and Fine-Tune.
-
 
 ## Prerequisites
 
@@ -43,14 +31,14 @@ Before you begin, ensure you have met the following requirements:
 1. Clone the repository:
    ```bash
    git clone https://github.com/sgsshankar/Snowflake-AI-Toolkit.git
-   cd snowflake-cortex-demo
+   cd snowflake-ai-toolkit
    ```
 
 2. Install dependencies (only required for local development):
    ```bash
    pip install -r requirements.txt
    ```
-
+   
    All necessary libraries are listed in `requirements.txt`.
 
 ## Setup
@@ -75,12 +63,7 @@ Launch the application locally using:
    streamlit run streamlit_app.py
    ```
 
-The app will open in your default browser with the following features:
-- Playground
-- Build
-- Notifications
-
-### On Snowflake
+### Natively on Snowflake
 
 To deploy the application natively in Snowflake, use the following command:
    ```bash
@@ -93,7 +76,6 @@ Replace the placeholders (`<your_account>`, `<your_username>`, etc.) with your a
 
 | File/Directory                      | Description                                      |
 |-------------------------------------|--------------------------------------------------|
-| [data/](data/)                      | Sample data for testing and demonstration        |
 | [src/](src/)                        | Source code for setup and styling                |
 | [src/setup.py](src/setup.py)        | Setup and initialization code                    |
 | [src/styles.css](src/styles.css)    | Custom styling                                   |
@@ -106,14 +88,6 @@ Replace the placeholders (`<your_account>`, `<your_username>`, etc.) with your a
 | [.gitignore](.gitignore)            | Git ignore file                                  |
 | [requirements.txt](requirements.txt)| Project dependencies                             |
 | [streamlit_app.py](streamlit_app.py)| Main application entry point                     |
-
-## Configuration
-
-### Snowflake Connection Parameters
-
-To configure the Snowflake connection parameters for running the application locally, you need to edit the `src/settings_config.json` file. This file contains the necessary connection details such as account, user, password, role, warehouse, database, and schema.
-
-Here is an example configuration:
 
 
 ## Troubleshooting
@@ -150,12 +124,20 @@ For assistance:
 - Contact project maintainers
 - Check documentation for common solutions
 
-## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Warranty
 
-## Acknowledgments
+The Software is provided as Open Source. This software is provided “as is” and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness for a particular purpose are disclaimed. In no event shall the owner or contributors be liable for any direct, indirect, incidental, special, exemplary, or consequential damages (including, but not limited to, procurement of substitute goods or services; loss of use, data, or profits; or business interruption) however caused and on any theory of liability, whether in contract, strict liability, or tort (including negligence or otherwise) arising in any way out of the use of this software, even if advised of the possibility of such damage.
 
-- Snowflake for Cortex platform
-- Streamlit for the web interface framework
-- All contributors and maintainers
+## Legal
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this tool except in compliance with the License. You may obtain a copy of the License at: http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+This is an Open Source repository and not an official Snowflake offering. This tool is not endorsed by Snowflake or any of the previous or current employers of the developers.
+
+## Trademarks
+
+This project may contain trademarks or logos for projects, products, or services. SNOWFLAKE is a trademark of Snowflake Computing, Inc in the United States and/or other countries. Any use of third-party trademarks or logos are subject to those third-party's policies.
+
