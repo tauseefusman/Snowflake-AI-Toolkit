@@ -11,7 +11,13 @@
     "stage": "SF_AI_STAGE"
   },
   "default_settings": {
-    "model": ["snowflake-arctic", "mistral-large", "reka-flash", "llama2-70b-chat", "gemma-7b", "mixtral-8x7b", "mistral-7b"],
+    "model":[
+      "claude-3-5-sonnet", "gemma-7b", "jamba-1.5-mini", "jamba-1.5-large", 
+      "jamba-instruct", "llama2-70b-chat", "llama3-8b", "llama3-70b", 
+      "llama3.1-8b", "llama3.1-70b", "llama3.1-405b", "llama3.2-1b", 
+      "llama3.2-3b", "mistral-large", "mistral-large2", "mistral-7b", 
+      "mixtral-8x7b", "reka-core", "reka-flash", "snowflake-arctic"
+  ],
     "fine_tune_models" : ["llama3-8b","llama3-70b","llama3.1-8b","llama3.1-70b","mistral-7b","mixtral-8x7b"],
     "temperature_min": 0.0,
     "temperature_max": 1.0,
@@ -20,7 +26,11 @@
     "max_tokens_max": 2000,
     "max_tokens": 200,               
     "guardrails": false,
-    "languages": ["en", "es", "fr", "de", "zh"],
+    "languages":[
+      "zh", "nl", "en", "fr", "de", 
+      "hi", "it", "ja", "ko", "pl", 
+      "pt", "ru", "es", "sv"
+  ],
     "logo_path" : "src/logo.webp",
     "embeddings" :{
       "EMBED_TEXT_768":["snowflake-arctic-embed-m-v1.5","snowflake-arctic-embed-m","e5-base-v2"],

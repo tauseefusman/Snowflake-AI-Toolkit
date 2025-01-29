@@ -18,13 +18,14 @@ A dedicated section for constructing and deploying data pipelines and workflows 
 
 Before you begin, ensure you have met the following requirements:
 
-- **Snowflake Account**: An active Snowflake account with Cortex functionalities enabled.
+- **Snowflake Account**: Ensure you have an active Snowflake account in a region where Cortex functionalities are supported. For detailed information, refer to the [Availability Region documentation](https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability).
 - **Role Permissions**: ACCOUNTADMIN or equivalent role with permissions to create:
   - Stages
   - Databases
   - Other resources
 - **Python**: Version 3.7 or higher.
 - **Streamlit**: Installed on your local machine.
+- **Snowflake-CLI** : Install snowflake-cli through pip
 
 ## Installation
 
@@ -140,4 +141,3 @@ This is an Open Source repository and not an official Snowflake offering. This t
 ## Trademarks
 
 This project may contain trademarks or logos for projects, products, or services. SNOWFLAKE is a trademark of Snowflake Computing, Inc in the United States and/or other countries. Any use of third-party trademarks or logos are subject to those third-party's policies.
-
