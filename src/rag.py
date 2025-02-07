@@ -12,6 +12,9 @@ config_path = Path("src/settings_config.json")
 with open(config_path, "r") as f:
     config = json.load(f)
 
+settings = {}
+defaults = config["default_settings"]
+
 def display_rag(session):
     """
     Displays the Retrieval-Augmented Generation (RAG) interface in Streamlit.
@@ -134,9 +137,12 @@ def display_rag(session):
                     selected_column = st.selectbox("Select Column", ["Vector_Embeddings"])
         #st.subheader("Select Model, Embedding Type and Emdedding Model")
         st.info("Use the same embedding type and model consistently when creating embeddings.")
+        is_private_preview_model_shown = st.checkbox("Show private preview models", value=False)
         col1,col2,col3 =  st.columns(3)
         with col1:
-            selected_model = st.selectbox("Select Model", config["default_settings"]["model"])
+            selected_model = st.selectbox("Select Model", config["default_settings"][
+                "private_preview_models" if is_private_preview_model_shown else "model"
+            ])
         with col2:
             embedding_type = st.selectbox("Select Embeddings", config["default_settings"]["embeddings"].keys())
         with col3:

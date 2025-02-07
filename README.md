@@ -19,6 +19,7 @@ A dedicated section for constructing and deploying data pipelines and workflows 
 Before you begin, ensure you have met the following requirements:
 
 - **Snowflake Account**: Ensure you have an active Snowflake account in a region where Cortex functionalities are supported. For detailed information, refer to the [Availability Region documentation](https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability).
+- **Private Preview Access**: To try private preview models in Snowflake, you need to contact your Snowflake account team to request access to the private preview feature.
 - **Role Permissions**: ACCOUNTADMIN or equivalent role with permissions to create:
   - Stages
   - Databases

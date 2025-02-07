@@ -64,7 +64,10 @@ def get_functionality_settings(functionality, config):
     defaults = config["default_settings"]
 
     if functionality == "Complete":
-        settings['model'] = st.selectbox("Change chatbot model:", defaults['model'])
+        is_private_preview_model_shown = st.checkbox("Show private preview models", value=False)
+        settings['model'] = st.selectbox("Change chatbot model:", defaults[
+                "private_preview_models" if is_private_preview_model_shown else "model"
+            ])
         settings['temperature'] = st.slider("Temperature:", defaults['temperature_min'], defaults['temperature_max'], defaults['temperature'])
         settings['max_tokens'] = st.slider("Max Tokens:", defaults['max_tokens_min'], defaults['max_tokens_max'], defaults['max_tokens'])
         settings['guardrails'] = st.checkbox("Enable Guardrails", value=defaults['guardrails'])
