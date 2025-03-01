@@ -4,7 +4,7 @@ Snowflake AI Toolkit is an AI Accelerator and Playground for enabling AI in Snow
 # Features
 
 ### Playground
-An interactive environment where users can experiment with Snowflake Cortex functions, test prompts, and and play around with cortex functions.
+An interactive environment where users can chat and experiment with Snowflake Cortex functions, test prompts, and and play around with cortex functions.
 
 ### Build
 A dedicated section for constructing and deploying data pipelines and workflows using Snowflake Cortex's powerful AI capabilities, enabling seamless integration with your Snowflake databases and tables
@@ -12,7 +12,11 @@ A dedicated section for constructing and deploying data pipelines and workflows 
 - Retrieval-Augmented Generation (RAG) for question answering with your own data
 - Fine-tuning large language models on your custom datasets
 
-![Snowflake Cortex Demo](assets/demo.gif)
+### Search
+Get a hybrid (vector and keyword) search engine on your text data in minutes,
+- Create and manage Cortex Search Service
+- Use Cortex Search for your RAG Application
+- Use Cortex Search Powered Chat
 
 ## Prerequisites
 
@@ -87,6 +91,7 @@ Replace the placeholders (`<your_account>`, `<your_username>`, etc.) with your a
 | [src/playground.py](src/playground.py) | Playground mode functionality                  |
 | [src/rag.py](src/rag.py) | RAG mode functionality                  |
 | [src/fine_tune.py](src/fine_tune.py) | Fine-tuning functionality                  |
+| [src/search.py](src/search.py) | Cortex Search Functionality               |
 | [.gitignore](.gitignore)            | Git ignore file                                  |
 | [requirements.txt](requirements.txt)| Project dependencies                             |
 | [streamlit_app.py](streamlit_app.py)| Main application entry point                     |
