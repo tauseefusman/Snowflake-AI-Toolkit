@@ -456,6 +456,42 @@ def create_vector_embedding_from_stage(session, db, schema, stage, embedding_typ
         st.error(f"Failed to create embeddings: {e}")
         raise e
 
+def create_cortex_search_service(session, database, schema, table, column, attributes, service_name, embedding_model, warehouse):
+    """Creates a Cortex Search Service for the specified table and column.
 
+    Args:
+        session: Snowflake session.
+        database (str): Database name.
+        schema (str): Schema name.
+        table (str): Table name.
+        columns (list[str]): Column to use for the search service.
+        service_name (str): Name of the search service to create.
+        embedding_model (str): Model to use for embeddings.
+        warehouse (str): Snowflake warehouse to use.
 
+    Raises:
+        SnowparkSQLException: If the query fails.
+    """
 
+    attributes = " , ".join(attributes)
+
+    print("column: ",column)
+    print("attributes: ",attributes)
+
+    query = f"""
+        CREATE OR REPLACE CORTEX SEARCH SERVICE {database}.{schema}.{service_name}
+        ON {column}
+        ATTRIBUTES {attributes}
+        WAREHOUSE = {warehouse}
+        TARGET_LAG = '1 day'
+        AS (
+            SELECT * FROM {database}.{schema}.{table}
+        );
+    """
+    try:
+        print("query: ",query)
+        session.sql(query).collect()
+        st.success(f"Cortex Search Service {service_name} created successfully.")
+    except Exception as e:
+        st.error(f"Failed to create Cortex Search Service {service_name}: {e}")
+        raise e

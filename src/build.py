@@ -5,9 +5,10 @@ from src.cortex_functions import *
 from snowflake.snowpark.exceptions import SnowparkSQLException
 from src.notification import *
 from src.utils import *
-from src import rag, fine_tune  # Import RAG and Fine Tune modules
+from src import rag, fine_tune, search  # Import RAG and Fine Tune modules
 from pathlib import Path
 import json
+from src.query_result_builder import fetch_fine_tuned_models
 
 # Load the config file
 config_path = Path("src/settings_config.json")
@@ -89,7 +90,7 @@ def trigger_async_operation(session, functionality, input_data, settings):
     thread = threading.Thread(target=asyncio.run, args=(async_execute_functionality(session, functionality, input_data, settings, notification_id),))
     thread.start()
 
-def get_functionality_settings(functionality, config):
+def get_functionality_settings(functionality, config, session=None):
     """
     Retrieves settings for the specified functionality based on the configuration.
 
@@ -104,10 +105,17 @@ def get_functionality_settings(functionality, config):
     defaults = config["default_settings"]
 
     if functionality == "Complete":
-        is_private_preview_model_shown = st.checkbox("Show private preview models", value=False)
-        settings['model'] = st.selectbox("Change chatbot model:", defaults[
-                "private_preview_models" if is_private_preview_model_shown else "model"
-            ])
+        col1, col2 = st.columns(2)
+        with col1: 
+            model_type = st.selectbox("Model Type", ["Base","Fine Tuned", "Private Preview"])
+        with col2:
+            if model_type == "Base":
+                settings['model'] = st.selectbox("Change chatbot model:", defaults['model'])
+            elif model_type == "Private Preview":
+                settings['model'] = st.selectbox("Change chatbot model:", defaults['private_preview_models'])
+            else:
+                fine_tuned_models = fetch_fine_tuned_models(session)
+                settings['model'] = st.selectbox("Change chatbot model:", fine_tuned_models)   
         settings['temperature'] = st.slider("Temperature:", defaults['temperature_min'], defaults['temperature_max'], defaults['temperature'])
         settings['max_tokens'] = st.slider("Max Tokens:", defaults['max_tokens_min'], defaults['max_tokens_max'], defaults['max_tokens'])
         settings['guardrails'] = st.checkbox("Enable Guardrails", value=defaults['guardrails'])
@@ -200,7 +208,7 @@ def display_build(session):
             fine_tune.display_fine_tune(session)
         else:
             # For other functionalities, continue with the existing flow
-            settings = get_functionality_settings(functionality, config)
+            settings = get_functionality_settings(functionality, config,session)
             input_data = get_non_playground_input(session, functionality)
 
             if st.button(f"Run {functionality}"):

@@ -2,6 +2,8 @@ import streamlit as st
 import json
 from src.cortex_functions import *
 from snowflake.snowpark.exceptions import SnowparkSQLException
+from src.query_result_builder import *
+from snowflake.core import Root
 from src.utils import *
 from pathlib import Path
 
@@ -10,18 +12,9 @@ config_path = Path("src/settings_config.json")
 with open(config_path, "r") as f:
     config = json.load(f)
 
-
 def execute_functionality(session, functionality, input_data, settings):
     """
     Executes the selected functionality in playground mode.
-    
-    Args:
-        session: Snowflake session object for database operations
-        functionality (str): The selected functionality to execute ("Complete", "Translate", etc.)
-        input_data (dict): Dictionary containing input data for the selected functionality
-        settings (dict): Dictionary containing settings for the selected functionality
-        
-    Displays the results of the executed functionality using Streamlit components.
     """
     if functionality == "Complete":
         result_json = get_complete_result(
@@ -49,25 +42,25 @@ def execute_functionality(session, functionality, input_data, settings):
         result = get_sentiment(session,input_data['text'])
         st.write(f"**Sentiment Analysis Result:** {result}")
 
-def get_functionality_settings(functionality, config):
+def get_functionality_settings(functionality, config, session=None):
     """
     Returns settings based on the selected functionality from config.
-    
-    Args:
-        functionality (str): The selected functionality ("Complete", "Translate", etc.)
-        config (dict): Configuration dictionary containing default settings
-        
-    Returns:
-        dict: Dictionary containing the settings for the selected functionality
     """
     settings = {}
     defaults = config["default_settings"]
 
     if functionality == "Complete":
-        is_private_preview_model_shown = st.checkbox("Show private preview models", value=False)
-        settings['model'] = st.selectbox("Change chatbot model:", defaults[
-                "private_preview_models" if is_private_preview_model_shown else "model"
-            ])
+        col1, col2 = st.columns(2)
+        with col1: 
+            model_type = st.selectbox("Model Type", ["Base","Fine Tuned", "Private Preview"])
+        with col2:
+            if model_type == "Base":
+                settings['model'] = st.selectbox("Change chatbot model:", defaults['model'])
+            elif model_type == "Private Preview":
+                settings['model'] = st.selectbox("Change chatbot model:", defaults['private_preview_models'])
+            else:
+                fine_tuned_models = fetch_fine_tuned_models(session)
+                settings['model'] = st.selectbox("Change chatbot model:", fine_tuned_models)        
         settings['temperature'] = st.slider("Temperature:", defaults['temperature_min'], defaults['temperature_max'], defaults['temperature'])
         settings['max_tokens'] = st.slider("Max Tokens:", defaults['max_tokens_min'], defaults['max_tokens_max'], defaults['max_tokens'])
         settings['guardrails'] = st.checkbox("Enable Guardrails", value=defaults['guardrails'])
@@ -81,17 +74,12 @@ def get_functionality_settings(functionality, config):
 def get_playground_input(functionality):
     """
     Returns input data for playground mode based on selected functionality.
-    
-    Args:
-        functionality (str): The selected functionality ("Complete", "Translate", etc.)
-        
-    Returns:
-        dict: Dictionary containing the input data for the selected functionality
     """
     input_data = {}
     
     if functionality == "Complete":
         input_data['prompt'] = st.text_area("Enter a prompt:", placeholder="Type your prompt here...")
+        input_data["prompt"] = input_data["prompt"].strip()
     elif functionality == "Translate":
         input_data['text'] = st.text_area("Enter text to translate:", placeholder="Type your text here...")
     elif functionality == "Summarize":
@@ -107,30 +95,274 @@ def get_playground_input(functionality):
 def display_playground(session):
     """
     Displays the playground mode interface in Streamlit.
-    
-    Args:
-        session: Snowflake session object for database operations
-        
-    Creates an interactive interface allowing users to:
-    - Select different functionalities (Complete, Translate, etc.)
-    - Configure settings for the selected functionality
-    - Input data and execute the functionality
-    - View results or error messages
     """
-    st.title("Playground Mode")
+    st.title("Playground")
 
-    # Dropdown to choose the functionality
-    functionality = st.selectbox(
-        "Choose functionality:",
-        ["Select Functionality", "Complete", "Translate", "Summarize", "Extract", "Sentiment"]
-    )
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    if functionality != "Select Functionality":
-        settings = get_functionality_settings(functionality, config)
-        input_data = get_playground_input(functionality)
+    if "cortex_chat" not in st.session_state:
+        st.session_state.cortex_chat = []
+    
+    slide_window = 20
 
-        if st.button(f"Run {functionality}"):
-            try:
-                execute_functionality(session, functionality, input_data, settings)
-            except SnowparkSQLException as e:
-                st.error(f"Error: {e}")
+    choose_col1, choose_col2 = st.columns(2)
+    with choose_col1:
+        choices = st.selectbox("Choose Functionality", ["LLM Functions","Chat Using"])
+    
+    if choices == "LLM Functions":
+        with choose_col2:
+            functionality = st.selectbox(
+                "Choose functionality:",
+                ["Select Functionality", "Complete", "Translate", "Summarize", "Extract", "Sentiment"]
+            )
+
+        if functionality != "Select Functionality":
+            settings = get_functionality_settings(functionality, config, session)
+            input_data = get_playground_input(functionality)
+
+            if st.button(f"Run {functionality}"):
+                try:
+                    execute_functionality(session, functionality, input_data, settings)
+                except SnowparkSQLException as e:
+                    st.error(f"Error: {e}")
+   
+    elif choices == "Chat Using":
+        with choose_col2:
+            options = st.selectbox("Choose one of the options", ["Search Service","RAG"])
+        
+        if options == "Search Service":
+            # Settings in expander
+            with st.expander("Settings", expanded=True):
+                st.subheader("Choose Your Search Service")
+                col1, col2 = st.columns(2)
+                with col1:
+                    selected_db = st.selectbox("Database", list_databases(session))
+                with col2:
+                    selected_schema = st.selectbox("Schema", list_schemas(session, selected_db))
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    cortex_services = list_cortex_services(session,selected_db,selected_schema)
+                    selected_service = st.selectbox("Service", cortex_services or [])
+                attributes = []
+                if selected_service:
+                    if "prev_selected_service" not in st.session_state:
+                        st.session_state.prev_selected_service = selected_service
+                    if st.session_state.prev_selected_service != selected_service:
+                        st.session_state.cortex_chat = []
+                        st.session_state.prev_selected_service = selected_service 
+
+                    with col2:
+                        data = fetch_cortex_service(session,selected_service,selected_db,selected_schema)
+                        row = data[0]
+                        cols = row.columns.split(",")
+                        attributes = row.attribute_columns.split(",")
+                        columns = st.multiselect("Display Columns", cols)
+                
+                st.subheader("Create Filter & Limits")
+                col3, col4 = st.columns(2)
+                with col3:
+                    filter_column = st.selectbox("Filter Columns", attributes)
+                with col4:
+                    filter_operator = st.selectbox("Filter Operator", ["@eq", "@contains", "@gte", "@lte"])
+                filter_value = st.text_input(f"Enter value for {filter_operator} on {filter_column}")
+
+                if filter_column and filter_operator and filter_value:
+                    if filter_operator == "@eq":
+                        filter = { "@eq": { filter_column: filter_value } }
+                    elif filter_operator == "@contains":
+                        filter = { "@contains": { filter_column: filter_value } }
+                    elif filter_operator == "@gte":
+                        filter = { "@gte": { filter_column: filter_value } }
+                    elif filter_operator == "@lte":
+                        filter = { "@lte": { filter_column: filter_value } }
+                    st.write(f"Generated Filter: {filter}")
+                else:
+                    filter = {}
+                limit = st.slider("Limit Results", min_value=1, max_value=10, value=1)
+
+                st.subheader("Choose Your Model")
+                col5, col6 = st.columns(2)
+                with col5:
+                    model_type = st.selectbox("Model Type", ["Base","Fine Tuned", "Private Preview"])
+                with col6:
+                    if model_type == "Base":
+                        selected_model = st.selectbox("Model", config["default_settings"]["model"])
+                    elif model_type == "Private Preview":
+                        selected_model = st.selectbox("Model", config["default_settings"]["private_preview_models"])
+                    else:
+                        fine_tuned_models = fetch_fine_tuned_models(session)
+                        selected_model = st.selectbox("Model", fine_tuned_models)
+
+            # Chat container
+            chat_placeholder = st.container(border=True, height=700)
+            with chat_placeholder:
+                st.subheader("Chat Messages")
+                for message in st.session_state.get("cortex_chat", []):
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+            
+            if question := st.chat_input("Enter your question"):
+                
+                st.session_state.cortex_chat.append({"role": "user", "content": question})
+                with chat_placeholder: 
+                    with st.chat_message("user"):
+                        st.markdown(question)
+                try:
+                    root = Root(session)
+                    service = (root
+                            .databases[selected_db]
+                            .schemas[selected_schema]
+                            .cortex_search_services[selected_service.lower()]
+                            )
+                    if not columns:
+                        show_toast_message("Please select columns to display.")
+                        return
+                    columns = [col.lower() for col in columns]
+                    resp = service.search(
+                        query=question,
+                        columns=columns,
+                        filter=filter, 
+                        limit=int(limit)
+                    )
+                    
+                    retrieved_data = resp 
+
+                    def get_chat_history():
+                        start_index = max(0, len(st.session_state.cortex_chat) - slide_window)
+                        filtered_history = [
+                            msg for msg in st.session_state.messages[start_index:] if not msg["content"].startswith("An error occurred") 
+                        ]
+                        return filtered_history
+                        
+                    chat_history = get_chat_history()
+                    
+                    prompt = f"""
+                            You are an AI assistant using Retrieval-Augmented Generation (RAG). Your task is to provide accurate and relevant answers based on the user's question, the retrieved context from a Cortex Search Service, and the prior chat history (if any). Follow these instructions:
+                            1. Use the chat history to understand the conversation context, if context is empty, refer retrieved context.
+                            2. Use the retrieved context to ground your answer in the provided data (this is in json form, so under the json keys and values fully).
+                            3. Answer the question concisely and directly, without explicitly mentioning the sources (chat history or retrieved context) unless asked.   
+                    
+                            Note: Identify if the user is asking a question from the chat history or the retrieved context. If the user is asking a question from the chat history, answer the question based on the chat history. If the user is asking a question from the retrieved context, answer the question based on the retrieved context. If the user is asking a question from the chat history and the retrieved context, answer the question based on the chat history. If the user is asking a question that is not from the chat history or the retrieved context, answer the question based on the chat history.
+                            
+                            <chat_history>
+                            {chat_history}
+                            </chat_history>
+
+                            <retrieved_context>
+                            {retrieved_data}
+                            </retrieved_context>
+
+                            <question>
+                            {question}
+                            </question>
+
+                            Answer:
+                            """
+                    
+                    if prompt:
+                        prompt = prompt.replace("'", "\\'")
+                    res = execute_query_and_get_result(session,prompt,selected_model,"Generate RAG Response")
+
+                    result_json = json.loads(res)
+                    response_1 = result_json.get("choices", [{}])[0].get("messages", "No messages found")
+                    st.session_state.cortex_chat.append({"role": "assistant", "content": response_1})
+                    with chat_placeholder:
+                        with st.chat_message("assistant"):
+                            st.markdown(response_1)
+                except Exception as e:
+                    add_log_entry(session, "Generate Search Response", str(e))
+                    with chat_placeholder:
+                        with st.chat_message("assistant"):
+                            st.markdown("An error occurred. Please check logs for details.")
+                    st.session_state.cortex_chat.append({"role": "assistant", "content": "An error occurred. Please check logs for details."})
+
+                # st.rerun(scope="fragment")
+        
+        elif options == "RAG":
+            # Settings in expander
+            with st.expander("Settings", expanded=True):
+                st.subheader("Choose Your Embeddings")
+                col1, col2 = st.columns(2)
+                with col1:
+                    selected_db = st.selectbox("Database", list_databases(session))
+                with col2:
+                    selected_schema = st.selectbox("Schema", list_schemas(session, selected_db))
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    selected_table = st.selectbox("Select Table", list_tables(session, selected_db, selected_schema) or [] )
+                    if "prev_selected_table" not in st.session_state:
+                        st.session_state.prev_selected_table = selected_table
+                    if st.session_state.prev_selected_table != selected_table:
+                        st.session_state.messages = []
+                        st.session_state.prev_selected_table = selected_table            
+                
+                with col2:
+                    if selected_table:
+                        required_columns = ["Vector_Embeddings"]
+                        missing_cols = validate_table_columns(session, selected_db, selected_schema, selected_table, required_columns)
+                        if missing_cols:
+                            st.info("The table is missing vector_embeddings column. Please use the appropriate table.")
+                        else:
+                            selected_column = st.selectbox("Select Column", ["Vector_Embeddings"])
+
+                st.subheader("Choose Your Models") 
+                col1,col2=  st.columns(2)
+                with col1:
+                    model_type = st.selectbox("Model Type", ["Base","Fine Tuned", "Private Preview"])
+                with col2:
+                    if model_type == "Base":
+                        selected_model = st.selectbox("Model", config["default_settings"]["model"])
+                    elif model_type == "Private Preview":
+                        selected_model = st.selectbox("Model", config["default_settings"]["private_preview_models"])
+                    else:
+                        fine_tuned_models = fetch_fine_tuned_models(session)
+                        selected_model = st.selectbox("Model", fine_tuned_models)
+                st.info("Use the same embedding type and model consistently when creating embeddings.")
+                col4, col5 = st.columns(2)
+                with col4:
+                    embeddings = list(config["default_settings"]["embeddings"].keys())
+                    embedding_type = st.selectbox("Select Embeddings", embeddings[1:])
+                with col5:
+                    embedding_model = st.selectbox("Embedding Model", config["default_settings"]["embeddings"][embedding_type])
+
+            # Chat container
+            rag_chat_container = st.container(border=True, height=700)
+            with rag_chat_container:
+                st.subheader("Chat Messages")
+                for message in st.session_state.get("messages", []):
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+            
+            rag = st.checkbox("Use your own documents as context?", value=True)
+            if question := st.chat_input("Enter your question"):
+                st.session_state.messages.append({"role": "user", "content": question})
+                with rag_chat_container: 
+                    with st.chat_message("user"):
+                        st.markdown(question)
+                try:
+                    def get_chat_history():
+                        start_index = max(0, len(st.session_state.cortex_chat) - slide_window)
+                        filtered_history = [
+                            msg for msg in st.session_state.messages[start_index:]
+                            if not msg["content"].startswith("An error occurred") 
+                        ]
+                        return filtered_history
+                    
+                    chat_history = get_chat_history()
+
+                    prompt = create_prompt_for_rag(session, question, rag, selected_column, selected_db, selected_schema, selected_table,embedding_type,embedding_model, chat_history)
+                    if prompt:
+                        prompt = prompt.replace("'", "\\'")
+                    result = execute_query_and_get_result(session, prompt, selected_model, "Generate RAG Response")
+                    result_json = json.loads(result)
+                    response = result_json.get("choices", [{}])[0].get("messages", "No messages found")
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    with rag_chat_container:
+                        with st.chat_message("assistant"):
+                            st.markdown(response)
+                except Exception as e:
+                    add_log_entry(session, "Generate RAG Response", str(e))
+                    st.error("An error occurred :  Check if same embedding type and model are selected. Please check the logs for details.")
