@@ -19,5 +19,6 @@ streamlit:
     - src/setup.py
     - src/notification.py
     - src/settings_config.json
-    - src/logo.webp
+    - src/logo.png
     - src/query_result_builder.py
+    - src/search.py

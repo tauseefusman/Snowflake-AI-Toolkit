@@ -12,9 +12,6 @@ config_path = Path("src/settings_config.json")
 with open(config_path, "r") as f:
     config = json.load(f)
 
-settings = {}
-defaults = config["default_settings"]
-
 def display_rag(session):
     """
     Displays the Retrieval-Augmented Generation (RAG) interface in Streamlit.
@@ -39,6 +36,8 @@ def display_rag(session):
 
     if create_or_use == "Create Knowledge Source":
 
+
+        st.subheader("Choose Your Stage")
         # Row 1: Database and Schema Selection
         col1, col2 = st.columns(2)
         with col1:
@@ -58,7 +57,6 @@ def display_rag(session):
                     if uploaded_file:
                         try:
                             upload_file_to_stage(session, selected_db, selected_schema, selected_stage, uploaded_file)
-                            st.success(f"File '{uploaded_file.name}' uploaded successfully.")
                         except Exception as e:
                             st.error(f"Failed to upload file: {e}")
                             add_log_entry(session, "Upload File", str(e))
@@ -81,10 +79,12 @@ def display_rag(session):
                 st.error(f"Failed to list files in stage: {e}")
                 add_log_entry(session, "List Files in Stage", str(e))
 
+        
+        st.subheader("Choose Your Embeddings Type and Model")
         # Embedding Options
         col1, col2 = st.columns(2)
         with col1:
-            embedding_type = st.selectbox("Select Embeddings", config["default_settings"]["embeddings"].keys())
+            embedding_type = st.selectbox("Select Embeddings", ["EMBED_TEXT_768","EMBED_TEXT_1024"])
         with col2:
             embedding_model = st.selectbox("Select Model", config["default_settings"]["embeddings"][embedding_type])
         # Output Table
@@ -137,25 +137,24 @@ def display_rag(session):
                     selected_column = st.selectbox("Select Column", ["Vector_Embeddings"])
         #st.subheader("Select Model, Embedding Type and Emdedding Model")
         st.info("Use the same embedding type and model consistently when creating embeddings.")
-        is_private_preview_model_shown = st.checkbox("Show private preview models", value=False)
         col1,col2,col3 =  st.columns(3)
         with col1:
-            selected_model = st.selectbox("Select Model", config["default_settings"][
-                "private_preview_models" if is_private_preview_model_shown else "model"
-            ])
+            selected_model = st.selectbox("Select Model", config["default_settings"]["model"])
         with col2:
-            embedding_type = st.selectbox("Select Embeddings", config["default_settings"]["embeddings"].keys())
+            # i want all embedding types except the first one
+            embeddings = list(config["default_settings"]["embeddings"].keys())
+            embedding_type = st.selectbox("Select Embeddings", embeddings[1:])
         with col3:
             embedding_model = st.selectbox("Select Model", config["default_settings"]["embeddings"][embedding_type])
         
         question = st.text_input("Enter question", placeholder="Type your question here...")
-        rag = st.checkbox("Use your own documents as context?")
+        rag = st.checkbox("Use your own documents as context?",True)
 
         if st.button("Generate"):
             if question:
                 try:
                     # Create the prompt
-                    prompt = create_prompt_for_rag(session, question, rag, selected_column, selected_db, selected_schema, selected_table,embedding_type,embedding_model)
+                    prompt = create_prompt_for_rag(session, question, rag, selected_column, selected_db, selected_schema, selected_table,embedding_type,embedding_model,[])
                     if prompt:
                         prompt = prompt.replace("'", "\\'")
                     # Execute the query and get the result
@@ -166,7 +165,7 @@ def display_rag(session):
                 except Exception as e:
                     # Log the error and show an error message
                     add_log_entry(session, "Generate RAG Response", str(e))
-                    st.error("An error occurred :  Check if same embedding type and model are selected. Please check the logs for details.")
+                    st.error("An error occurred :  Check if same embedding type is created. And check logs for more details.")
             else:
                 st.error("Please enter a question.")
 

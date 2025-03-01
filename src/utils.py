@@ -7,6 +7,7 @@ import time
 import base64
 import os
 import traceback
+from src.cortex_functions import *
 
 # Load the config file
 config_path = Path("src/settings_config.json")
@@ -27,12 +28,24 @@ def render_image(filepath: str):
         image_string = f'data:image/{mime_type};base64,{content_b64encoded}'
         image_html = f"""
             <div style="text-align: center;">
-                <img src="{image_string}" alt="App Logo" style="width: 150px; margin-bottom: 20px;">
+                <img src="{image_string}" alt="App Logo" style="width: 200px;">
             </div>
         """
         st.sidebar.markdown(image_html, unsafe_allow_html=True)
 
+def list_cortex_services(session,database,schema):
+    q = f"SHOW CORTEX SEARCH SERVICES IN {database}.{schema}"
+    return [row["name"] for row in session.sql(q).collect()]
 
+
+def fetch_cortex_service(session, service_name,database,schema):
+    q = f"SHOW CORTEX SEARCH SERVICEs LIKE '{service_name}' IN {database}.{schema}"
+    return session.sql(q).collect()
+
+def cortex_search_data_scan(session, service_name):
+    q = f"SELECT * FROM TABLE (CORTEX_SEARCH_DATA_SCAN (SERVICE_NAME => '{service_name}'));"
+    return session.sql(q).collect()
+    
 def list_databases(session):
     """
     Lists all databases in Snowflake.
@@ -196,7 +209,7 @@ def validate_table_columns(session, database, schema, table, required_columns):
         raise RuntimeError(f"Failed to validate columns for table '{table}': {e}")
 
 
-def create_prompt_for_rag(session, question: str, rag: bool, column: str, database: str, schema: str, table: str,embedding_type:str,embedding_model:str):
+def create_prompt_for_rag(session, question: str, rag: bool, column: str, database: str, schema: str, table: str,embedding_type:str,embedding_model:str, chat_history: list):
     """
     Creates a prompt for Retrieval-Augmented Generation (RAG).
     
@@ -210,7 +223,7 @@ def create_prompt_for_rag(session, question: str, rag: bool, column: str, databa
         table (str): Name of the table
         embedding_type (str): Type of embedding
         embedding_model (str): Name of the embedding model
-        
+        chat_history (list): List of chat messages
     Returns:
         str: Generated prompt
     """
@@ -218,21 +231,62 @@ def create_prompt_for_rag(session, question: str, rag: bool, column: str, databa
         cmd = f"""
         WITH results AS (
             SELECT RELATIVE_PATH,
-                   VECTOR_COSINE_SIMILARITY({column},
-                   SNOWFLAKE.CORTEX.{embedding_type}('{embedding_model}', ?)) AS similarity,
-                   chunk
+                VECTOR_COSINE_SIMILARITY({column},
+                SNOWFLAKE.CORTEX.{embedding_type}('{embedding_model}', ?)) AS similarity,
+                chunk
             FROM {database}.{schema}.{table}
             ORDER BY similarity DESC
             LIMIT 3
         )
         SELECT chunk, relative_path FROM results;
         """
+        
         question_rewrite = session.sql(cmd, [question]).collect()
-        prompt = f"Context:\n{question_rewrite}\n\nQuestion: {question}\nAnswer:"
-        return prompt
+
+        # Include chat history in the prompt
+        chat_history_str = "\n".join(f"{msg['role']}: {msg['content']}" for msg in chat_history)
+
+        prompt = f"""
+        You are an AI assistant using RAG. Use the past messages and retrieved context to provide relevant answers. Note: Need not mention what the answer is based on.
+
+        <chat_history>
+        {chat_history_str}
+        </chat_history>
+
+        <retrieved_context>
+        {question_rewrite}
+        </retrieved_context>
+
+        <question>
+        {question}
+        </question>
+
+        Answer:
+        """
     else:
-        prompt = f"Question: {question}\nAnswer:"
-        return prompt
+        if len(chat_history):
+            chat_history_str = "\n".join(f"{msg['role']}: {msg['content']}" for msg in chat_history)
+        else:
+            chat_history_str = ""
+
+        prompt = f"""
+        You are an AI assistant. Use the past messages to understand context and provide relevant answers. Note: Need not mention what the answer is based on.
+
+        <chat_history>
+        {chat_history_str}
+        </chat_history>
+
+        <question>
+        {question}
+        </question>
+
+        Answer:
+        """
+    return prompt
+
+def create_prompt_for_search_service(session, question: str, search_service: str, chat_history: list):
+
+    return
 
 def get_cortex_complete_result(session, query: str):
     """
@@ -547,4 +601,3 @@ class pdf_text_chunker:
         #st.success("UDF pdf_text_chunker created successfully.")
     except Exception as e:
         st.error(f"Error creating UDF: {e}")
-

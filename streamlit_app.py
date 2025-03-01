@@ -6,6 +6,7 @@ from pathlib import Path
 import json
 from snowflake.snowpark.exceptions import SnowparkSQLException
 from src.notification import *
+from src.search import *
 
 # Load the config file
 config_path = Path("src/settings_config.json")
@@ -58,69 +59,45 @@ setup_pdf_text_chunker(st.session_state.snowflake_session)
 # Load custom CSS for sidebar styling
 st.markdown("""
     <style>
-    /* Custom CSS for Sidebar */
+            
+    /* Sidebar Background */
     .css-18e3c8v {
         background-color: #333;
         padding: 20px;
         color: white;
     }
 
-    .sidebar-title {
-        font-size: 1.5em;
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: white;
-    }
-
+    /* Sidebar Sections */
     .sidebar-section {
         background-color: #444;
         border-radius: 8px;
-        margin-bottom: 10px;
         padding: 15px;
         color: white;
         border: 1px solid #555;
-    }
-
-    .sidebar-section h2 {
-        font-size: 1.3em;
-        margin-bottom: 10px;
-        font-weight: bold;
-        color: #56CCF2;
-    }
-
-    .sidebar-section-item {
-        font-size: 1em;
-        padding: 5px 0;
-        margin-left: 10px;
-        color: white;
-        cursor: pointer;
-    }
-
-    .sidebar-section-item:hover {
-        color: #56CCF2;
-        cursor: pointer;
-    }
-
-    .sidebar-image {
+        width: 100%; /* Ensures uniform width */
         text-align: center;
-        margin-bottom: 20px;
     }
-
-    .sidebar-image img {
-        width: 150px;
-        height: auto;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
+            
+        [data-testid="stSidebar"] button { 
+            width: 100%;    
+            justify-content: center;
+            text-align: center;
+            item-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 10px;
+        } 
+            
     </style>
 """, unsafe_allow_html=True)
+
 
 # Sidebar Navigation with logo
 render_image(config["default_settings"]["logo_path"])
 
 # Sidebar content with expanders and buttons under each category
 with st.sidebar:
-    st.title("📋 Select Menu")
+    st.title("📋 Menu")
 
     # Overview Section
     with st.expander("🔍 **Overview**", expanded=False):
@@ -135,6 +112,8 @@ with st.sidebar:
             st.session_state.page = "Playground"
         if st.button("🔧 Build"):
             st.session_state.page = "Build"
+        if st.button("🔍 Cortex Search"):
+            st.session_state.page = "Cortex Search"
         if st.button("🔔 Notification"):
             st.session_state.page = "Notification"
 
@@ -144,6 +123,7 @@ pages = {
     "Playground": playground.display_playground,
     "Build": build.display_build,
     "Notification": notification.display_notification,
+    "Cortex Search": display_search,
     "Setup": setup.display_setup
 }
 

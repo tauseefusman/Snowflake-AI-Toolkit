@@ -75,6 +75,8 @@ def execute_query_and_get_result(session, prompt, model, functionality):
             }}
         );
         """
+        query = query.encode("ascii", "ignore").decode()
+        print("query: ",query)
         result = session.sql(query).collect()
         return result[0][0] if result else None
     except Exception as e:
