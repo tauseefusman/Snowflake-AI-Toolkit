@@ -19,7 +19,10 @@ Get a hybrid (vector and keyword) search engine on your text data in minutes,
 - Use Cortex Search Powered Chat
 
 ### Agent
-
+Cortex Agents orchestrate across both structured and unstructured data sources to deliver insights.
+- Create and Manage Cortex Agent Instances
+- Test the Agent against the Data
+- Utilize Cortex Search and Cortex Analyst through Agents
 
 ## Prerequisites
 
